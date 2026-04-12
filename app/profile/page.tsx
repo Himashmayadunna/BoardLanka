@@ -91,10 +91,10 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto"></div>
+          <p className="mt-4 text-gray-400">Loading profile...</p>
         </div>
       </div>
     );
@@ -102,11 +102,11 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-lg shadow-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
-              className="w-8 h-8 text-red-600"
+              className="w-8 h-8 text-red-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -119,11 +119,11 @@ export default function ProfilePage() {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-xl font-semibold text-white mb-2">Error</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
           <Link
             href="/signin"
-            className="inline-block bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+            className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-2 rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300"
           >
             Sign In Again
           </Link>
@@ -137,19 +137,19 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
           {/* Cover Image */}
-          <div className="h-32 bg-gradient-to-r from-emerald-600 to-teal-600"></div>
+          <div className="h-32 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
 
           {/* Profile Info */}
           <div className="relative px-6 pb-6">
             {/* Avatar */}
             <div className="absolute -top-12 left-6">
-              <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                <span className="text-3xl font-bold text-emerald-600">
+              <div className="w-24 h-24 bg-gray-800 rounded-full border-4 border-gray-800 shadow-lg flex items-center justify-center">
+                <span className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                   {user.firstName.charAt(0)}
                   {user.lastName.charAt(0)}
                 </span>
@@ -160,14 +160,14 @@ export default function ProfilePage() {
             <div className="pt-14">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-white">
                     {user.firstName} {user.lastName}
                   </h1>
                   <span
                     className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
                       user.accountType === "seller"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : "bg-blue-500/20 text-blue-400"
                     }`}
                   >
                     {user.accountType === "seller"
@@ -177,7 +177,7 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                 >
                   <svg
                     className="w-5 h-5"
@@ -202,10 +202,10 @@ export default function ProfilePage() {
         {/* Profile Details */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Personal Information */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-emerald-600"
+                className="w-5 h-5 text-emerald-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -224,28 +224,28 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-500">
                   First Name
                 </label>
-                <p className="mt-1 text-gray-900">{user.firstName}</p>
+                <p className="mt-1 text-white">{user.firstName}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-500">
                   Last Name
                 </label>
-                <p className="mt-1 text-gray-900">{user.lastName}</p>
+                <p className="mt-1 text-white">{user.lastName}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-500">
                   Email Address
                 </label>
-                <p className="mt-1 text-gray-900">{user.email}</p>
+                <p className="mt-1 text-white">{user.email}</p>
               </div>
             </div>
           </div>
 
           {/* Account Information */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-emerald-600"
+                className="w-5 h-5 text-emerald-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-500">
                   Account Type
                 </label>
-                <p className="mt-1 text-gray-900 capitalize">
+                <p className="mt-1 text-white capitalize">
                   {user.accountType}
                 </p>
               </div>
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-500">
                   Member Since
                 </label>
-                <p className="mt-1 text-gray-900">
+                <p className="mt-1 text-white">
                   {formatDate(user.createdAt)}
                 </p>
               </div>
@@ -289,9 +289,9 @@ export default function ProfilePage() {
                 <p className="mt-1 flex items-center gap-2">
                   {user.marketingUpdates ? (
                     <>
-                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
                         <svg
-                          className="w-3 h-3 text-green-600"
+                          className="w-3 h-3 text-green-400"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -302,13 +302,13 @@ export default function ProfilePage() {
                           />
                         </svg>
                       </span>
-                      <span className="text-gray-900">Subscribed</span>
+                      <span className="text-white">Subscribed</span>
                     </>
                   ) : (
                     <>
-                      <span className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center">
                         <svg
-                          className="w-3 h-3 text-gray-400"
+                          className="w-3 h-3 text-gray-500"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -319,7 +319,7 @@ export default function ProfilePage() {
                           />
                         </svg>
                       </span>
-                      <span className="text-gray-900">Not Subscribed</span>
+                      <span className="text-white">Not Subscribed</span>
                     </>
                   )}
                 </p>
@@ -329,10 +329,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="mt-6 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-emerald-600"
+              className="w-5 h-5 text-emerald-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -349,11 +349,11 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
               href="/findrooms"
-              className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-colors"
+              className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-emerald-600"
+                  className="w-5 h-5 text-emerald-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -367,18 +367,18 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-gray-900">Find Rooms</p>
+                <p className="font-medium text-white">Find Rooms</p>
                 <p className="text-sm text-gray-500">Browse available rooms</p>
               </div>
             </Link>
 
             <Link
               href="/annexes&houses"
-              className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-colors"
+              className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-emerald-600"
+                  className="w-5 h-5 text-emerald-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-gray-900">Annexes & Houses</p>
+                <p className="font-medium text-white">Annexes & Houses</p>
                 <p className="text-sm text-gray-500">View properties</p>
               </div>
             </Link>
@@ -400,11 +400,11 @@ export default function ProfilePage() {
             {user.accountType === "seller" && (
               <Link
                 href="/my-listings"
-                className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-colors"
+                className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
               >
-                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                   <svg
-                    className="w-5 h-5 text-emerald-600"
+                    className="w-5 h-5 text-emerald-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -418,7 +418,7 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">My Listings</p>
+                  <p className="font-medium text-white">My Listings</p>
                   <p className="text-sm text-gray-500">Manage your properties</p>
                 </div>
               </Link>
