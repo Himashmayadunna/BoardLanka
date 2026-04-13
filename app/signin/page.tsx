@@ -39,7 +39,7 @@ export default function SignInPage() {
         return;
       }
 
-      const res = await fetch(`${apiUrl}/auth/signin`, {
+      const res = await fetch(`${apiUrl}/api/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,15 +64,25 @@ export default function SignInPage() {
         sessionStorage.setItem("token", data.token);
       }
 
+      // Store complete user data in localStorage for profile page
       if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          firstName: data.user.user_metadata?.firstName || "User",
+          lastName: data.user.user_metadata?.lastName || "",
+          accountType: data.user.user_metadata?.accountType || "buyer",
+          marketingUpdates: data.user.user_metadata?.marketingUpdates || false,
+          createdAt: data.user.created_at,
+        };
+        localStorage.setItem("user", JSON.stringify(userData));
       }
 
       alert("Sign in successful!");
       window.location.href = "/profile";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign in error:", error);
-      alert("Server error. Please try again.");
+      alert(`Server error: ${error.message || "Please try again."} Make sure the backend server on port 5000 is running.`);
     } finally {
       setIsLoading(false);
     }

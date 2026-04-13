@@ -23,7 +23,20 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Get token from localStorage or sessionStorage
+        // First, try to get user from localStorage (stored during signin)
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+            setIsLoading(false);
+            return;
+          } catch (parseError) {
+            console.error("Error parsing stored user:", parseError);
+          }
+        }
+
+        // Fallback: Fetch from backend if not in localStorage
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token");
 
@@ -40,7 +53,7 @@ export default function ProfilePage() {
           return;
         }
 
-        const res = await fetch(`${apiUrl}/auth/profile`, {
+        const res = await fetch(`${apiUrl}/api/auth/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -55,6 +68,7 @@ export default function ProfilePage() {
             // Token expired or invalid, redirect to signin
             localStorage.removeItem("token");
             sessionStorage.removeItem("token");
+            localStorage.removeItem("user");
             router.push("/signin");
             return;
           }
@@ -64,6 +78,8 @@ export default function ProfilePage() {
         }
 
         setUser(data.user);
+        // Update localStorage with fresh data
+        localStorage.setItem("user", JSON.stringify(data.user));
       } catch (err) {
         console.error("Profile fetch error:", err);
         setError("Failed to load profile. Please try again.");
@@ -78,6 +94,7 @@ export default function ProfilePage() {
   const handleSignOut = () => {
     localStorage.removeItem("token");
     sessionStorage.removeItem("token");
+    localStorage.removeItem("user");
     router.push("/");
   };
 
@@ -175,25 +192,46 @@ export default function ProfilePage() {
                       : "Room Seeker"}
                   </span>
                 </div>
-                <button
-                  onClick={handleSignOut}
-                  className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="mt-4 sm:mt-0 flex items-center gap-2">
+                  <Link
+                    href="/profile/edit"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-lg transition-colors border border-emerald-500/50"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Sign Out
-                </button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    Edit Profile
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -373,7 +411,7 @@ export default function ProfilePage() {
             </Link>
 
             <Link
-              href="/annexes&houses"
+              href="/annexes-houses"
               className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
             >
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -398,30 +436,57 @@ export default function ProfilePage() {
             </Link>
 
             {user.accountType === "seller" && (
-              <Link
-                href="/my-listings"
-                className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
-              >
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-emerald-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-white">My Listings</p>
-                  <p className="text-sm text-gray-500">Manage your properties</p>
-                </div>
-              </Link>
+              <>
+                <Link
+                  href="/addproperty"
+                  className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-emerald-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">Add Property</p>
+                    <p className="text-sm text-gray-500">List a new property</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/my-listings"
+                  className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-emerald-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">My Listings</p>
+                    <p className="text-sm text-gray-500">Manage your properties</p>
+                  </div>
+                </Link>
+              </>
             )}
           </div>
         </div>

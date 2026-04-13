@@ -64,7 +64,7 @@ export default function SignUpPage() {
         return;
       }
 
-      const res = await fetch(`${apiUrl}/users`, {
+      const res = await fetch(`${apiUrl}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,9 +90,9 @@ export default function SignUpPage() {
 
       alert("Account created successfully!");
       window.location.href = "/signin";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      alert("Server error. Please try again.");
+      alert(`Server error: ${error.message || "Please try again."} Make sure the backend server on port 5000 is running.`);
     } finally {
       setIsLoading(false);
     }
