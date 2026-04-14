@@ -37,20 +37,20 @@ const bedroomOptions = [
 ];
 
 const priceRanges = [
-  { min: 0, max: 10000, label: "Under Rs. 10,000", icon: "💰" },
-  { min: 10000, max: 20000, label: "Rs. 10K - 20K", icon: "💵" },
-  { min: 20000, max: 50000, label: "Rs. 20K - 50K", icon: "💴" },
-  { min: 50000, max: Infinity, label: "Over Rs. 50K", icon: "💷" },
+  { min: 0, max: 10000, label: "Under Rs. 10,000" },
+  { min: 10000, max: 20000, label: "Rs. 10K - 20K" },
+  { min: 20000, max: 50000, label: "Rs. 20K - 50K" },
+  { min: 50000, max: Infinity, label: "Over Rs. 50K" },
 ];
 
 const locationOptions = [
-  { value: "", label: "All Locations", icon: "🌍" },
-  { value: "colombo", label: "Colombo", icon: "🏙️" },
-  { value: "homagama", label: "Homagama", icon: "🎓" },
-  { value: "biyagama", label: "Biyagama", icon: "🏭" },
-  { value: "katunayaka", label: "Katunayaka", icon: "✈️" },
-  { value: "galle", label: "Galle", icon: "🏖️" },
-  { value: "jaffna", label: "Jaffna", icon: "🛕" },
+  { value: "", label: "All Locations" },
+  { value: "colombo", label: "Colombo" },
+  { value: "homagama", label: "Homagama" },
+  { value: "biyagama", label: "Biyagama" },
+  { value: "katunayaka", label: "Katunayaka" },
+  { value: "galle", label: "Galle" },
+  { value: "jaffna", label: "Jaffna" },
 ];
 
 function FindRoomsContent() {
@@ -73,7 +73,7 @@ function FindRoomsContent() {
         setError(null);
         
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        const res = await fetch(`${apiUrl}/api/properties?type=room`);
+        const res = await fetch(`${apiUrl}/api/properties?type=house,land`);
         
         if (!res.ok) {
           throw new Error(`Failed to fetch properties: ${res.statusText}`);
@@ -189,7 +189,7 @@ function FindRoomsContent() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            Find Your Perfect Room
+            Find Your Perfect Property and Land
             {selectedLocation && (
               <span className="block bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent text-2xl mt-2">
                 in {currentLocationName}
@@ -197,7 +197,7 @@ function FindRoomsContent() {
             )}
           </h1>
           <p className="text-gray-400 text-center text-lg">
-            Browse through verified rooms across Sri Lanka
+            Browse through verified property and land listings across Sri Lanka
           </p>
         </div>
       </div>
@@ -216,11 +216,7 @@ function FindRoomsContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Location Filter */}
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+          <h2 className="text-xl font-semibold text-white mb-4">
             Select Location
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -234,7 +230,6 @@ function FindRoomsContent() {
                     : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
                 }`}
               >
-                <span className="text-2xl block mb-1">{option.icon}</span>
                 <span className="font-medium text-sm">{option.label}</span>
               </button>
             ))}
@@ -284,7 +279,6 @@ function FindRoomsContent() {
                   : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
               }`}
             >
-              <span className="text-3xl block mb-2">💰</span>
               <span className="font-medium">All Prices</span>
             </button>
             {priceRanges.map((range, idx) => (
@@ -297,7 +291,6 @@ function FindRoomsContent() {
                     : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
                 }`}
               >
-                <span className="text-3xl block mb-2">{range.icon}</span>
                 <span className="font-medium text-sm">{range.label}</span>
               </button>
             ))}
@@ -310,7 +303,7 @@ function FindRoomsContent() {
             <span className="text-gray-600">Active Filters:</span>
             {selectedLocation && (
               <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                📍 {currentLocationName}
+                {currentLocationName}
                 <button
                   onClick={() => setSelectedLocation("")}
                   className="ml-1 hover:text-emerald-900"
@@ -332,7 +325,7 @@ function FindRoomsContent() {
             )}
             {selectedPriceRange && (
               <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                💲 {priceRanges.find(r => r.min === selectedPriceRange.min && r.max === selectedPriceRange.max)?.label || 'Custom Range'}
+                {priceRanges.find(r => r.min === selectedPriceRange.min && r.max === selectedPriceRange.max)?.label || 'Custom Range'}
                 <button
                   onClick={() => setSelectedPriceRange(null)}
                   className="ml-1 hover:text-orange-900"
@@ -356,7 +349,7 @@ function FindRoomsContent() {
 
         {/* Results Count */}
         <p className="text-gray-400 mb-6">
-          Showing <span className="font-semibold text-emerald-400">{filteredProperties.length}</span> rooms
+          Showing <span className="font-semibold text-emerald-400">{filteredProperties.length}</span> properties
           {selectedLocation && ` in ${currentLocationName}`}
           {selectedBedrooms > 0 && ` with ${selectedBedrooms === 3 ? "3+" : selectedBedrooms} bedroom${selectedBedrooms > 1 ? 's' : ''}`}
           {selectedPriceRange && ` from Rs. ${selectedPriceRange.min.toLocaleString()} to Rs. ${selectedPriceRange.max === Infinity ? "∞" : selectedPriceRange.max.toLocaleString()}`}
@@ -397,11 +390,7 @@ function FindRoomsContent() {
                 <h3 className="font-bold text-lg text-white mb-2 line-clamp-1">
                   {property.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-3 flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                <p className="text-gray-400 text-sm mb-3">
                   {property.location}
                 </p>
 
@@ -444,7 +433,7 @@ function FindRoomsContent() {
           <div className="text-center py-16">
             <span className="text-6xl mb-4 block">🏠</span>
             <h3 className="text-xl font-semibold text-white mb-2">
-              {properties.length === 0 ? "No rooms available" : "No rooms match your filters"}
+              {properties.length === 0 ? "No properties available" : "No properties match your filters"}
             </h3>
             <p className="text-gray-400">
               {properties.length === 0 
@@ -535,11 +524,7 @@ function FindRoomsContent() {
               <h2 className="text-2xl font-bold text-white mb-2">
                 {selectedProperty.title}
               </h2>
-              <p className="text-gray-400 flex items-center gap-1 mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+              <p className="text-gray-400 mb-4">
                 {selectedProperty.location}
               </p>
 
@@ -716,7 +701,7 @@ function FindRoomsContent() {
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <span>
-                          <strong>Safety Tip:</strong> Always visit the property in person before making any payment. Never transfer money without seeing the room first.
+                          <strong>Safety Tip:</strong> Always visit the property in person before making any payment. Never transfer money without seeing the listing first.
                         </span>
                       </p>
                     </div>

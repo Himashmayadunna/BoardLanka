@@ -386,7 +386,7 @@ export default function ProfilePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
-              href="/findrooms"
+              href="/property-land"
               className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
             >
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -405,13 +405,13 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-white">Find Rooms</p>
-                <p className="text-sm text-gray-500">Browse available rooms</p>
+                <p className="font-medium text-white">Property and Land</p>
+                <p className="text-sm text-gray-500">Browse property and land listings</p>
               </div>
             </Link>
 
             <Link
-              href="/annexes-houses"
+              href="/anexxes-rooms"
               className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
             >
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -430,8 +430,8 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-white">Annexes & Houses</p>
-                <p className="text-sm text-gray-500">View properties</p>
+                <p className="font-medium text-white">Anexxes and Rooms</p>
+                <p className="text-sm text-gray-500">View anexxes and rooms</p>
               </div>
             </Link>
 

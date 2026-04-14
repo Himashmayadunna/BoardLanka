@@ -37,20 +37,20 @@ const bedroomOptions = [
 ];
 
 const priceRanges = [
-  { min: 50000, max: 100000, label: "Rs. 50K - 100K", icon: "💰" },
-  { min: 100000, max: 200000, label: "Rs. 100K - 200K", icon: "💵" },
-  { min: 200000, max: 350000, label: "Rs. 200K - 350K", icon: "💴" },
-  { min: 350000, max: 500000, label: "Rs. 350K - 500K", icon: "💷" },
+  { min: 50000, max: 100000, label: "Rs. 50K - 100K" },
+  { min: 100000, max: 200000, label: "Rs. 100K - 200K" },
+  { min: 200000, max: 350000, label: "Rs. 200K - 350K" },
+  { min: 350000, max: 500000, label: "Rs. 350K - 500K" },
 ];
 
 const locationOptions = [
-  { value: "", label: "All Locations", icon: "🌍" },
-  { value: "colombo", label: "Colombo", icon: "🏙️" },
-  { value: "homagama", label: "Homagama", icon: "🎓" },
-  { value: "biyagama", label: "Biyagama", icon: "🏭" },
-  { value: "katunayaka", label: "Katunayaka", icon: "✈️" },
-  { value: "galle", label: "Galle", icon: "🏖️" },
-  { value: "jaffna", label: "Jaffna", icon: "🏝️" },
+  { value: "", label: "All Locations" },
+  { value: "colombo", label: "Colombo" },
+  { value: "homagama", label: "Homagama" },
+  { value: "biyagama", label: "Biyagama" },
+  { value: "katunayaka", label: "Katunayaka" },
+  { value: "galle", label: "Galle" },
+  { value: "jaffna", label: "Jaffna" },
 ];
 
 function AnnexesHousesContent() {
@@ -73,7 +73,7 @@ function AnnexesHousesContent() {
         setError(null);
         
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        const res = await fetch(`${apiUrl}/api/properties?type=annex,house`);
+        const res = await fetch(`${apiUrl}/api/properties?type=annex,room`);
         
         if (!res.ok) {
           throw new Error(`Failed to fetch properties: ${res.statusText}`);
@@ -189,7 +189,7 @@ function AnnexesHousesContent() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            Find Your Perfect Annex or House
+            Find Your Perfect Anexxes and Rooms
             {selectedLocation && (
               <span className="block bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent text-2xl mt-2">
                 in {currentLocationName}
@@ -197,7 +197,7 @@ function AnnexesHousesContent() {
             )}
           </h1>
           <p className="text-gray-400 text-center text-lg">
-            Browse through verified annexes and houses across Sri Lanka
+            Browse through verified anexxes and rooms across Sri Lanka
           </p>
         </div>
       </div>
@@ -216,11 +216,7 @@ function AnnexesHousesContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Location Filter */}
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+          <h2 className="text-xl font-semibold text-white mb-4">
             Select Location
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -234,7 +230,6 @@ function AnnexesHousesContent() {
                     : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
                 }`}
               >
-                <span className="text-2xl block mb-1">{option.icon}</span>
                 <span className="font-medium text-sm">{option.label}</span>
               </button>
             ))}
@@ -284,7 +279,6 @@ function AnnexesHousesContent() {
                   : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
               }`}
             >
-              <span className="text-3xl block mb-2">ðŸ’°</span>
               <span className="font-medium">All Prices</span>
             </button>
             {priceRanges.map((range, idx) => (
@@ -297,7 +291,6 @@ function AnnexesHousesContent() {
                     : "border-gray-700 hover:border-emerald-500/50 hover:bg-gray-800 text-gray-300"
                 }`}
               >
-                <span className="text-3xl block mb-2">{range.icon}</span>
                 <span className="font-medium text-sm">{range.label}</span>
               </button>
             ))}
@@ -310,34 +303,34 @@ function AnnexesHousesContent() {
             <span className="text-gray-600">Active Filters:</span>
             {selectedLocation && (
               <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                ðŸ“ {currentLocationName}
+                {currentLocationName}
                 <button
                   onClick={() => setSelectedLocation("")}
                   className="ml-1 hover:text-emerald-900"
                 >
-                  Ã—
+                  x
                 </button>
               </span>
             )}
             {selectedBedrooms > 0 && (
               <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                ðŸ›ï¸ {selectedBedrooms === 3 ? "3+ Bedrooms" : `${selectedBedrooms} Bedroom${selectedBedrooms > 1 ? 's' : ''}`}
+                Beds: {selectedBedrooms === 3 ? "3+ Bedrooms" : `${selectedBedrooms} Bedroom${selectedBedrooms > 1 ? 's' : ''}`}
                 <button
                   onClick={() => setSelectedBedrooms(0)}
                   className="ml-1 hover:text-teal-900"
                 >
-                  Ã—
+                  x
                 </button>
               </span>
             )}
             {selectedPriceRange && (
               <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                💲 {priceRanges.find(r => r.min === selectedPriceRange.min && r.max === selectedPriceRange.max)?.label || 'Custom Range'}
+                {priceRanges.find(r => r.min === selectedPriceRange.min && r.max === selectedPriceRange.max)?.label || 'Custom Range'}
                 <button
                   onClick={() => setSelectedPriceRange(null)}
                   className="ml-1 hover:text-orange-900"
                 >
-                  Ã—
+                  x
                 </button>
               </span>
             )}
@@ -359,7 +352,7 @@ function AnnexesHousesContent() {
           Showing <span className="font-semibold text-emerald-400">{filteredProperties.length}</span> properties
           {selectedLocation && ` in ${currentLocationName}`}
           {selectedBedrooms > 0 && ` with ${selectedBedrooms === 3 ? "3+" : selectedBedrooms} bedroom${selectedBedrooms > 1 ? 's' : ''}`}
-          {selectedPriceRange && ` from Rs. ${selectedPriceRange.min.toLocaleString()} to Rs. ${selectedPriceRange.max === Infinity ? "âˆž" : selectedPriceRange.max.toLocaleString()}`}
+          {selectedPriceRange && ` from Rs. ${selectedPriceRange.min.toLocaleString()} to Rs. ${selectedPriceRange.max === Infinity ? "Infinity" : selectedPriceRange.max.toLocaleString()}`}
         </p>
 
         {/* Property Cards Grid */}
@@ -397,11 +390,7 @@ function AnnexesHousesContent() {
                 <h3 className="font-bold text-lg text-white mb-2 line-clamp-1">
                   {property.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-3 flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                <p className="text-gray-400 text-sm mb-3">
                   {property.location}
                 </p>
 
@@ -442,7 +431,7 @@ function AnnexesHousesContent() {
         {/* No Results */}
         {filteredProperties.length === 0 && (
           <div className="text-center py-16">
-            <span className="text-6xl mb-4 block">ðŸ˜ï¸</span>
+            <span className="text-6xl mb-4 block">No Results</span>
             <h3 className="text-xl font-semibold text-white mb-2">
               {properties.length === 0 ? "No properties available" : "No properties match your filters"}
             </h3>
@@ -525,7 +514,7 @@ function AnnexesHousesContent() {
                   </div>
                 )}
                 <div className="bg-gray-900/80 backdrop-blur px-3 py-1 rounded-full text-sm font-medium text-white">
-                  {selectedProperty.bedrooms} Bed{selectedProperty.bedrooms > 1 ? 's' : ''} {selectedProperty.bathrooms && `â€¢ ${selectedProperty.bathrooms} Bath`}
+                  {selectedProperty.bedrooms} Bed{selectedProperty.bedrooms > 1 ? 's' : ''} {selectedProperty.bathrooms && ` | ${selectedProperty.bathrooms} Bath`}
                 </div>
               </div>
             </div>
@@ -535,11 +524,7 @@ function AnnexesHousesContent() {
               <h2 className="text-2xl font-bold text-white mb-2">
                 {selectedProperty.title}
               </h2>
-              <p className="text-gray-400 flex items-center gap-1 mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+              <p className="text-gray-400 mb-4">
                 {selectedProperty.location}
               </p>
 
@@ -636,7 +621,7 @@ function AnnexesHousesContent() {
                   <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">ðŸ‘¤</span>
+                        <span className="text-2xl">User</span>
                       </div>
                       <div>
                         <h4 className="font-semibold text-white flex items-center gap-2">

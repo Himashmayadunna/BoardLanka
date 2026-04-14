@@ -255,7 +255,7 @@ export default function AddPropertyPage() {
 
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 sm:p-8">
           <h1 className="text-3xl font-bold text-white mb-2">Add New Property</h1>
-          <p className="text-gray-400 mb-6">List your room, annex, or house for rent</p>
+          <p className="text-gray-400 mb-6">List your room, anexx, house, or land for rent</p>
 
           {message && (
             <div
@@ -287,7 +287,7 @@ export default function AddPropertyPage() {
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                placeholder="e.g., Modern Annex in Colombo 5"
+                placeholder="e.g., Land in Colombo 5"
                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
@@ -307,6 +307,7 @@ export default function AddPropertyPage() {
                   <option value="room">Room</option>
                   <option value="annex">Annex</option>
                   <option value="house">House</option>
+                  <option value="land">Land</option>
                 </select>
               </div>
 
@@ -321,9 +322,11 @@ export default function AddPropertyPage() {
                   className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
                 >
                   <option value="colombo">Colombo</option>
-                  <option value="gampaha">Gampaha</option>
-                  <option value="kalutara">Kalutara</option>
-                  <option value="kandy">Kandy</option>
+                  <option value="homagama">Homagama</option>
+                  <option value="biyagama">Biyagama</option>
+                  <option value="katunayaka">Katunayaka</option>
+                  <option value="galle">Galle</option>
+                  <option value="jaffna">Jaffna</option>
                 </select>
               </div>
             </div>

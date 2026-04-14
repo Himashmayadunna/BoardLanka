@@ -15,8 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BoardLanka - Find Rooms, Annexes & Houses in Sri Lanka",
-  description: "Find and list rental rooms, annexes, apartments and houses across Sri Lanka. Connect with property owners and tenants easily.",
+  title: "BoardLanka - Property and Land, Anexxes and Rooms in Sri Lanka",
+  description: "Find and list rental property, land, anexxes and rooms across Sri Lanka. Connect with property owners and tenants easily.",
+  icons: {
+    icon: "/logo/logo.png",
+    shortcut: "/logo/logo.png",
+    apple: "/logo/logo.png",
+  },
 };
 
 export default function RootLayout({

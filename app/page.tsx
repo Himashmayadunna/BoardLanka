@@ -20,14 +20,14 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto">
-            Sri Lanka&apos;s trusted platform for finding rooms, annexes, apartments & houses for rent
+            Sri Lanka&apos;s trusted platform for finding property, land, anexxes and rooms for rent
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/findrooms"
+              href="/property-land"
               className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105"
             >
-              <span>🏠</span> Find a Place
+              <span>🏠</span> Property and Land
             </Link>
             <Link
               href="/signup"
@@ -55,7 +55,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Easy Search</h3>
               <p className="text-gray-400">
-                Find rooms and properties across Sri Lanka with our powerful search filters
+                Find property, land, anexxes and rooms across Sri Lanka with our powerful search filters
               </p>
             </div>
             <div className="group bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 hover:transform hover:scale-105">
@@ -94,11 +94,10 @@ export default function Home() {
               (location) => (
                 <Link
                   key={location}
-                  href={`/findrooms?location=${location.toLowerCase()}`}
+                  href={`/property-land?location=${location.toLowerCase()}`}
                   className="group relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl text-center hover:transform hover:scale-105 transition-all duration-300 border border-gray-700/50 hover:border-emerald-500/50 overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-teal-500/0 group-hover:from-emerald-500/10 group-hover:to-teal-500/10 transition-all duration-300"></div>
-                  <span className="text-3xl mb-3 block relative z-10">📍</span>
                   <span className="font-semibold text-white relative z-10">{location}</span>
                 </Link>
               )

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface NavItem {
@@ -10,8 +11,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Find Rooms", href: "/findrooms" },
-  { label: "Annexes & Houses", href: "/annexes-houses" },
+  { label: "Property and Land", href: "/property-land" },
+  { label: "Anexxes and Rooms", href: "/anexxes-rooms" },
   { label: "Profile", href: "/profile" },
 ];
 
@@ -57,7 +58,7 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/findrooms?search=${encodeURIComponent(searchQuery)}`);
+      router.push(`/property-land?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -67,9 +68,14 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <span className="text-white font-bold text-xl">BL</span>
-            </div>
+            <Image
+              src="/logo/logo.png"
+              alt="BoardLanka logo"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-emerald-500/25"
+              priority
+            />
             <span className="text-white font-bold text-xl hidden sm:block">
               Board<span className="text-emerald-400">Lanka</span>
             </span>

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS properties (
   description TEXT NOT NULL,
   location VARCHAR(255) NOT NULL,
   area VARCHAR(100) NOT NULL,
-  type VARCHAR(50) CHECK (type IN ('room', 'annex', 'house')),
+  type VARCHAR(50) CHECK (type IN ('room', 'annex', 'house', 'land')),
   price DECIMAL(10, 2) NOT NULL,
   advance_payment DECIMAL(10, 2) NOT NULL,
   bedrooms INT DEFAULT 1,

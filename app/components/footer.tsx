@@ -1,25 +1,23 @@
 import Link from "next/link";
 
 const footerLinks = {
-  findRooms: [
-    { label: "1 Person Rooms", href: "/rooms/1-person" },
-    { label: "2 Person Rooms", href: "/rooms/2-person" },
-    { label: "4 Person Rooms", href: "/rooms/4-person" },
-    { label: "All Rooms", href: "/rooms" },
+  propertyAndLand: [
+    { label: "Houses", href: "/property-land" },
+    { label: "Land", href: "/property-land" },
+    { label: "All Property and Land", href: "/property-land" },
   ],
-  properties: [
-    { label: "Annexes", href: "/annexes&houses?type=annex" },
-    { label: "Full Houses", href: "/annexes&houses?type=house" },
-    { label: "Apartments", href: "/annexes&houses?type=apartment" },
-    { label: "All Properties", href: "/annexes&houses" },
+  anexxesAndRooms: [
+    { label: "Anexxes", href: "/anexxes-rooms" },
+    { label: "Rooms", href: "/anexxes-rooms" },
+    { label: "All Anexxes and Rooms", href: "/anexxes-rooms" },
   ],
   locations: [
-    { label: "Colombo", href: "/findrooms?location=colombo" },
-    { label: "Homagama", href: "/findrooms?location=homagama" },
-    { label: "Biyagama", href: "/findrooms?location=biyagama" },
-    { label: "Katunayaka", href: "/findrooms?location=katunayaka" },
-    { label: "Galle", href: "/findrooms?location=galle" },
-    { label: "Jaffna", href: "/findrooms?location=jaffna" },
+    { label: "Colombo", href: "/property-land?location=colombo" },
+    { label: "Homagama", href: "/property-land?location=homagama" },
+    { label: "Biyagama", href: "/property-land?location=biyagama" },
+    { label: "Katunayaka", href: "/property-land?location=katunayaka" },
+    { label: "Galle", href: "/property-land?location=galle" },
+    { label: "Jaffna", href: "/property-land?location=jaffna" },
   ],
   company: [
     { label: "About Us", href: "/about" },
@@ -114,14 +112,14 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Find Rooms */}
+          {/* Property and Land */}
           <div>
             <h3 className="font-semibold text-lg mb-4 text-emerald-400">
-              Find Rooms
+              Property and Land
             </h3>
             <ul className="space-y-2">
-              {footerLinks.findRooms.map((link) => (
-                <li key={link.href}>
+              {footerLinks.propertyAndLand.map((link) => (
+                <li key={`${link.label}-${link.href}`}>
                   <Link
                     href={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -133,14 +131,14 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Properties */}
+          {/* Anexxes and Rooms */}
           <div>
             <h3 className="font-semibold text-lg mb-4 text-emerald-400">
-              Properties
+              Anexxes and Rooms
             </h3>
             <ul className="space-y-2">
-              {footerLinks.properties.map((link) => (
-                <li key={link.href}>
+              {footerLinks.anexxesAndRooms.map((link) => (
+                <li key={`${link.label}-${link.href}`}>
                   <Link
                     href={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -159,7 +157,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2">
               {footerLinks.locations.map((link) => (
-                <li key={link.href}>
+                <li key={`${link.label}-${link.href}`}>
                   <Link
                     href={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -178,7 +176,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 mb-6">
               {footerLinks.company.map((link) => (
-                <li key={link.href}>
+                <li key={`${link.label}-${link.href}`}>
                   <Link
                     href={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -193,7 +191,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
-                <li key={link.href}>
+                <li key={`${link.label}-${link.href}`}>
                   <Link
                     href={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200"

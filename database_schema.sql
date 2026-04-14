@@ -34,7 +34,7 @@ CREATE TABLE public.properties (
   title TEXT NOT NULL,
   location TEXT NOT NULL,
   area TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('room', 'annex', 'house')),
+  type TEXT NOT NULL CHECK (type IN ('room', 'annex', 'house', 'land')),
   price DECIMAL(10, 2) NOT NULL,
   advance_payment DECIMAL(10, 2) NOT NULL,
   bedrooms INT NOT NULL DEFAULT 1,
