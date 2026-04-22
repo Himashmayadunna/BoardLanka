@@ -31,13 +31,7 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      if (!apiUrl) {
-        alert("API URL not configured");
-        setIsLoading(false);
-        return;
-      }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
       const res = await fetch(`${apiUrl}/api/auth/signin`, {
         method: "POST",

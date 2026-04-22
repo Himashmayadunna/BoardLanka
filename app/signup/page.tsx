@@ -56,13 +56,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      if (!apiUrl) {
-        alert("API URL not configured");
-        setIsLoading(false);
-        return;
-      }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
       const res = await fetch(`${apiUrl}/api/users`, {
         method: "POST",
@@ -92,7 +86,7 @@ export default function SignUpPage() {
       window.location.href = "/signin";
     } catch (error: any) {
       console.error("Signup error:", error);
-      alert(`Server error: ${error.message || "Please try again."} Make sure the backend server on port 5000 is running.`);
+      alert(`Server error: ${error.message || "Please try again."}`);
     } finally {
       setIsLoading(false);
     }
