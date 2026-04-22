@@ -51,7 +51,7 @@ function MyListingsContent() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/_/backend';
 
   useEffect(() => {
     try {

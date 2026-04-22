@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 // Increase payload size limit to handle base64 images
@@ -61,14 +62,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-const server = app.listen(5000, () => {
-  console.log("✓ Server running on port 5000");
+const server = app.listen(port, () => {
+  console.log(`✓ Server running on port ${port}`);
 });
 
 server.on("error", (err) => {
   console.error("Server error:", err.message);
   if (err.code === "EADDRINUSE") {
-    console.error("Port 5000 is already in use. Try killing the existing process.");
+    console.error(`Port ${port} is already in use. Try killing the existing process.`);
   }
   process.exit(1);
 });

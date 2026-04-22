@@ -185,14 +185,14 @@ export default function AddPropertyPage() {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
       const payload = {
         ...formData,
         images: uploadedImages,
       };
 
-      const response = await fetch("http://localhost:5000/api/properties", {
+      const response = await fetch(`${apiUrl}/api/properties`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

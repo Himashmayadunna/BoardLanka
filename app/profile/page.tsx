@@ -45,13 +45,7 @@ export default function ProfilePage() {
           return;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        if (!apiUrl) {
-          setError("API URL not configured");
-          setIsLoading(false);
-          return;
-        }
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
         const res = await fetch(`${apiUrl}/api/auth/profile`, {
           method: "GET",

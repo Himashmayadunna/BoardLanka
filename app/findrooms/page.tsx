@@ -72,7 +72,7 @@ function FindRoomsContent() {
         setLoading(true);
         setError(null);
         
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
         const res = await fetch(`${apiUrl}/api/properties?type=house,land`);
         
         if (!res.ok) {
