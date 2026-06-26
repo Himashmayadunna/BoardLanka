@@ -3,8 +3,25 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { 
+  User, 
+  MapPin, 
+  Settings, 
+  LogOut, 
+  PlusCircle, 
+  Building, 
+  Heart, 
+  ShieldCheck, 
+  Calendar, 
+  Search, 
+  FolderHeart,
+  Edit,
+  TrendingUp,
+  LayoutDashboard
+} from "lucide-react";
+import MeshBackground from "@/app/components/MeshBackground";
 
-interface User {
+interface UserData {
   id: string;
   accountType: string;
   firstName: string;
@@ -15,7 +32,7 @@ interface User {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -23,30 +40,26 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // First, try to get user from localStorage (stored during signin)
+        // Fetch from local cache first
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           try {
-            const userData = JSON.parse(storedUser);
-            setUser(userData);
+            setUser(JSON.parse(storedUser));
             setIsLoading(false);
             return;
-          } catch (parseError) {
-            console.error("Error parsing stored user:", parseError);
+          } catch (e) {
+            console.error(e);
           }
         }
 
-        // Fallback: Fetch from backend if not in localStorage
-        const token =
-          localStorage.getItem("token") || sessionStorage.getItem("token");
-
+        // Fallback: API profile check
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (!token) {
           router.push("/signin");
           return;
         }
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
-
         const res = await fetch(`${apiUrl}/api/auth/profile`, {
           method: "GET",
           headers: {
@@ -55,33 +68,27 @@ export default function ProfilePage() {
           },
         });
 
-        const data = await res.json();
-
+        const data = (await res.json()) as { message?: string; user?: UserData };
         if (!res.ok) {
           if (res.status === 401) {
-            // Token expired or invalid, redirect to signin
             localStorage.removeItem("token");
             sessionStorage.removeItem("token");
             localStorage.removeItem("user");
             router.push("/signin");
             return;
           }
-          setError(data.message || "Failed to load profile");
-          setIsLoading(false);
-          return;
+          throw new Error(data.message || "Failed to load profile");
         }
 
-        setUser(data.user);
-        // Update localStorage with fresh data
+        setUser(data.user || null);
         localStorage.setItem("user", JSON.stringify(data.user));
       } catch (err) {
-        console.error("Profile fetch error:", err);
+        console.error(err);
         setError("Failed to load profile. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchProfile();
   }, [router]);
 
@@ -93,6 +100,7 @@ export default function ProfilePage() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -102,40 +110,22 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading profile...</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (error) {
+  if (error || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-red-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="glass-card p-8 rounded-3xl border border-white/10 text-center max-w-sm">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-4">
+            <ShieldCheck size={24} />
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Error</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
-          <Link
-            href="/signin"
-            className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-2 rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300"
-          >
+          <h2 className="text-lg font-bold text-white mb-2">Session Error</h2>
+          <p className="text-xs text-gray-400 mb-6">{error || "User data not found."}</p>
+          <Link href="/signin" className="bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all">
             Sign In Again
           </Link>
         </div>
@@ -143,347 +133,196 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Profile Header */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
-          {/* Cover Image */}
-          <div className="h-32 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+    <div className="relative min-h-screen pt-24 pb-16">
+      <MeshBackground />
 
-          {/* Profile Info */}
-          <div className="relative px-6 pb-6">
-            {/* Avatar */}
-            <div className="absolute -top-12 left-6">
-              <div className="w-24 h-24 bg-gray-800 rounded-full border-4 border-gray-800 shadow-lg flex items-center justify-center">
-                <span className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  {user.firstName.charAt(0)}
-                  {user.lastName.charAt(0)}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Cover Canvas Banner */}
+        <div className="h-44 rounded-t-3xl bg-gradient-to-r from-primary/30 via-teal-500/20 to-secondary/30 border-t border-x border-white/10 relative overflow-hidden flex items-end p-6 shadow-inner">
+          <div className="absolute inset-0 bg-black/10 backdrop-blur-sm pointer-events-none" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/55 border border-white/10 text-[10px] font-bold text-primary relative z-10 select-none">
+            <LayoutDashboard size={12} />
+            <span>Dashboard Workspace</span>
+          </div>
+        </div>
+
+        {/* Header Metadata Section */}
+        <div className="bg-gray-950/80 backdrop-blur-2xl border-x border-b border-white/10 rounded-b-3xl p-6 relative shadow-2xl">
+          
+          {/* Avatar Position */}
+          <div className="absolute -top-12 left-6">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-primary to-secondary p-1 shadow-xl shadow-black/20">
+              <div className="w-full h-full bg-gray-950 rounded-[20px] flex items-center justify-center">
+                <span className="text-3xl font-extrabold bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent uppercase">
+                  {user.firstName.charAt(0)}{user.lastName?.charAt(0) || ""}
                 </span>
               </div>
             </div>
+          </div>
 
-            {/* User Name and Type */}
-            <div className="pt-14">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    {user.firstName} {user.lastName}
-                  </h1>
-                  <span
-                    className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
-                      user.accountType === "seller"
-                        ? "bg-purple-500/20 text-purple-400"
-                        : "bg-blue-500/20 text-blue-400"
-                    }`}
-                  >
-                    {user.accountType === "seller"
-                      ? "Property Owner"
-                      : "Room Seeker"}
-                  </span>
-                </div>
-                <div className="mt-4 sm:mt-0 flex items-center gap-2">
-                  <Link
-                    href="/profile/edit"
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-lg transition-colors border border-emerald-500/50"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Edit Profile
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    Sign Out
-                  </button>
-                </div>
-              </div>
+          <div className="pt-14 sm:pt-0 sm:pl-28 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-white">
+                {user.firstName} {user.lastName}
+              </h1>
+              <span className={`inline-block mt-1 text-xs font-semibold px-3 py-1 rounded-full border ${
+                user.accountType === "seller" 
+                  ? "bg-purple-500/10 text-purple-400 border-purple-500/25" 
+                  : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+              }`}>
+                {user.accountType === "seller" ? "Property Host / Owner" : "Room Seeker"}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile/edit"
+                className="flex items-center gap-1.5 px-4 py-2 bg-primary-glow text-primary hover:bg-primary hover:text-white rounded-xl border border-primary/20 text-xs font-semibold transition-all"
+              >
+                <Edit size={14} />
+                Edit Profile
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 text-xs font-semibold transition-all"
+              >
+                <LogOut size={14} />
+                Sign Out
+              </button>
             </div>
           </div>
+
         </div>
 
-        {/* Profile Details */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Personal Information */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-emerald-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              Personal Information
+        {/* Dashboard Panels Grid */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Personal Info Card */}
+          <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 shadow-xl">
+            <h2 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
+              <User size={16} className="text-primary" />
+              Account Details
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3.5 text-sm">
               <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  First Name
-                </label>
-                <p className="mt-1 text-white">{user.firstName}</p>
+                <p className="text-[10px] text-gray-500 font-semibold uppercase">Email Address</p>
+                <p className="text-white font-medium mt-0.5">{user.email}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Last Name
-                </label>
-                <p className="mt-1 text-white">{user.lastName}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Email Address
-                </label>
-                <p className="mt-1 text-white">{user.email}</p>
+                <p className="text-[10px] text-gray-500 font-semibold uppercase">Registered Since</p>
+                <p className="text-white font-medium mt-0.5">{formatDate(user.createdAt)}</p>
               </div>
             </div>
           </div>
 
-          {/* Account Information */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-emerald-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              Account Information
+          {/* Hosting Metrics Card */}
+          <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 shadow-xl">
+            <h2 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
+              <TrendingUp size={16} className="text-primary" />
+              Hosting Status
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3.5 text-sm">
               <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Account Type
-                </label>
-                <p className="mt-1 text-white capitalize">
-                  {user.accountType}
+                <p className="text-[10px] text-gray-500 font-semibold uppercase">Verification Status</p>
+                <p className="text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                  <ShieldCheck size={14} />
+                  Active Profile verified
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Member Since
-                </label>
-                <p className="mt-1 text-white">
-                  {formatDate(user.createdAt)}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Marketing Updates
-                </label>
-                <p className="mt-1 flex items-center gap-2">
-                  {user.marketingUpdates ? (
-                    <>
-                      <span className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
-                        <svg
-                          className="w-3 h-3 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                      <span className="text-white">Subscribed</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center">
-                        <svg
-                          className="w-3 h-3 text-gray-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                      <span className="text-white">Not Subscribed</span>
-                    </>
-                  )}
+                <p className="text-[10px] text-gray-500 font-semibold uppercase">Newsletter Alerts</p>
+                <p className="text-white font-medium mt-0.5">
+                  {user.marketingUpdates ? "Subscribed to local listings" : "Muted"}
                 </p>
               </div>
             </div>
           </div>
+
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-6 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-emerald-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            Quick Actions
+        {/* Quick Actions Panel */}
+        <div className="glass p-6 rounded-3xl border border-white/10 text-left mt-6 space-y-4 shadow-xl">
+          <h2 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
+            <Settings size={16} className="text-primary" />
+            Quick Access Actions
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            
             <Link
               href="/property-land"
-              className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+              className="flex items-center gap-3 p-4 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/30 rounded-2xl transition-all"
             >
-              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-emerald-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+              <div className="w-9 h-9 bg-primary-glow rounded-xl flex items-center justify-center text-primary">
+                <Search size={16} />
               </div>
-              <div>
-                <p className="font-medium text-white">Property and Land</p>
-                <p className="text-sm text-gray-500">Browse property and land listings</p>
+              <div className="text-xs">
+                <p className="font-bold text-white">Find Houses</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Browse housing catalog</p>
               </div>
             </Link>
 
             <Link
               href="/anexxes-rooms"
-              className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+              className="flex items-center gap-3 p-4 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/30 rounded-2xl transition-all"
             >
-              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-emerald-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
+              <div className="w-9 h-9 bg-primary-glow rounded-xl flex items-center justify-center text-primary">
+                <Building size={16} />
               </div>
-              <div>
-                <p className="font-medium text-white">Anexxes and Rooms</p>
-                <p className="text-sm text-gray-500">View anexxes and rooms</p>
+              <div className="text-xs">
+                <p className="font-bold text-white">Find Rooms</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Browse annexes & rooms</p>
               </div>
             </Link>
 
-            {user.accountType === "seller" && (
+            {user.accountType === "seller" ? (
               <>
                 <Link
                   href="/addproperty"
-                  className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/30 rounded-2xl transition-all"
                 >
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-emerald-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
+                  <div className="w-9 h-9 bg-primary-glow rounded-xl flex items-center justify-center text-primary">
+                    <PlusCircle size={16} />
                   </div>
-                  <div>
-                    <p className="font-medium text-white">Add Property</p>
-                    <p className="text-sm text-gray-500">List a new property</p>
+                  <div className="text-xs">
+                    <p className="font-bold text-white">Add Listing</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Host a new boarding</p>
                   </div>
                 </Link>
 
                 <Link
                   href="/my-listings"
-                  className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/50 border border-gray-700/50 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/30 rounded-2xl transition-all"
                 >
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-emerald-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
+                  <div className="w-9 h-9 bg-primary-glow rounded-xl flex items-center justify-center text-primary">
+                    <LayoutDashboard size={16} />
                   </div>
-                  <div>
-                    <p className="font-medium text-white">My Listings</p>
-                    <p className="text-sm text-gray-500">Manage your properties</p>
+                  <div className="text-xs">
+                    <p className="font-bold text-white">Manage Listings</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">View & edit listings</p>
                   </div>
                 </Link>
               </>
+            ) : (
+              <Link
+                href="/profile/edit"
+                className="flex items-center gap-3 p-4 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/30 rounded-2xl transition-all"
+              >
+                <div className="w-9 h-9 bg-primary-glow rounded-xl flex items-center justify-center text-primary">
+                  <ShieldCheck size={16} />
+                </div>
+                <div className="text-xs">
+                  <p className="font-bold text-white">Become Host</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Upgrade account scope</p>
+                </div>
+              </Link>
             )}
+
           </div>
         </div>
+
       </div>
     </div>
   );

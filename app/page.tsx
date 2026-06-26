@@ -1,154 +1,500 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { 
+  ArrowRight, 
+  MapPin, 
+  Sparkles, 
+  CheckCircle, 
+  MessageSquare, 
+  Search, 
+  ShieldCheck, 
+  Users, 
+  ChevronLeft, 
+  ChevronRight,
+  TrendingUp
+} from "lucide-react";
+import MeshBackground from "@/app/components/MeshBackground";
+import Interactive3DHero from "@/app/components/Interactive3DHero";
+
+interface Property {
+  id: string | number;
+  title: string;
+  location: string;
+  area?: string;
+  price: number;
+  type: string;
+  images: string[];
+  bedrooms: number;
+  bathrooms?: number;
+  seller?: { verified: boolean };
+}
+
+const cities = [
+  { name: "Colombo", count: "420+ Listings", search: "colombo", img: "https://images.unsplash.com/photo-1588598126743-4e3112c32cf9?w=600" },
+  { name: "Homagama", count: "180+ Listings", search: "homagama", img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600" },
+  { name: "Biyagama", count: "90+ Listings", search: "biyagama", img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600" },
+  { name: "Katunayaka", count: "120+ Listings", search: "katunayaka", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600" },
+  { name: "Galle", count: "150+ Listings", search: "galle", img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600" },
+  { name: "Jaffna", count: "65+ Listings", search: "jaffna", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600" },
+];
+
+const testimonials = [
+  {
+    quote: "Finding an annex near my campus was incredibly difficult until I used BoardLanka. The owner details were verified, and I booked it directly within a day!",
+    author: "Shenal Perera",
+    role: "Engineering Student, UoM",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
+  },
+  {
+    quote: "Listing my property on BoardLanka was seamless. I upgraded to a host account and started receiving high-quality leads from university students immediately.",
+    author: "Nilanthi Jayasinghe",
+    role: "Property Owner, Homagama",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150"
+  },
+  {
+    quote: "A premium solution for modern rentals in Sri Lanka. The user interface feels next-generation, and filtering by university areas is a game-changer.",
+    author: "Dr. Asela Gunawardena",
+    role: "Senior Lecturer",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150"
+  }
+];
 
 export default function Home() {
+  const [featured, setFeatured] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
+
+  // Fetch properties from local API
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
+        const res = await fetch(`${apiUrl}/api/properties`);
+        if (res.ok) {
+          const data = (await res.json()) as Property[];
+          setFeatured(data.slice(0, 3)); // show first 3 items
+        }
+      } catch (err) {
+        console.error("Failed to load featured properties:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+  const nextTestimonial = () => {
+    setTestimonialIdx((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevTestimonial = () => {
+    setTestimonialIdx((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
+  };
+
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
-      {/* Decorative Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 right-1/3 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl"></div>
-      </div>
+    <div className="relative min-h-screen overflow-x-hidden pt-20">
+      
+      {/* Mesh glowing particle background */}
+      <MeshBackground />
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-            Find Your Perfect
-            <span className="block bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              Boarding Place
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto">
-            Sri Lanka&apos;s trusted platform for finding property, land, anexxes and rooms for rent
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/property-land"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105"
+      <section className="relative py-16 md:py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Hero Left */}
+            <motion.div 
+              className="lg:col-span-7 space-y-8 text-left"
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
             >
-              <span>🏠</span> Property and Land
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center gap-2 bg-gray-800/50 border border-gray-600/50 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-700/50 hover:border-gray-500/50 transition-all duration-300"
-            >
-              <span>📝</span> List Your Property
-            </Link>
-          </div>
-        </div>
-      </section>
+              <motion.div 
+                variants={fadeInUp} 
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-glow border border-primary/20 text-xs font-semibold text-primary"
+              >
+                <Sparkles size={14} />
+                <span>The Future of Sri Lankan Rentals</span>
+              </motion.div>
 
-      {/* Features Section */}
-      <section className="relative py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-4">
-            Why Choose <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">BoardLanka</span>?
-          </h2>
-          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-            We make finding your next home simple, safe, and stress-free
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="group bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 hover:transform hover:scale-105">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="text-4xl">🔍</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Easy Search</h3>
-              <p className="text-gray-400">
-                Find property, land, anexxes and rooms across Sri Lanka with our powerful search filters
-              </p>
-            </div>
-            <div className="group bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 hover:transform hover:scale-105">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="text-4xl">✅</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Verified Listings</h3>
-              <p className="text-gray-400">
-                All properties are verified to ensure you get genuine and safe options
-              </p>
-            </div>
-            <div className="group bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 hover:transform hover:scale-105">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="text-4xl">💬</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Direct Contact</h3>
-              <p className="text-gray-400">
-                Connect directly with property owners without any middlemen
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+              <motion.h1 
+                variants={fadeInUp} 
+                className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]"
+              >
+                Find Your Perfect <br />
+                <span className="bg-gradient-to-r from-primary via-teal-400 to-secondary bg-clip-text text-transparent">
+                  Room, Annex or House
+                </span>
+              </motion.h1>
 
-      {/* Popular Locations */}
-      <section className="relative py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-4">
-            Popular <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Locations</span>
-          </h2>
-          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-            Explore properties in top cities across Sri Lanka
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {["Colombo", "Homagama", "Biyagama", "Katunayaka", "Galle", "Jaffna"].map(
-              (location) => (
+              <motion.p 
+                variants={fadeInUp} 
+                className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-2xl"
+              >
+                Helping university students, working professionals and modern families discover verified boarding places and luxury homes across Sri Lanka.
+              </motion.p>
+
+              <motion.div 
+                variants={fadeInUp} 
+                className="flex flex-col sm:flex-row gap-4"
+              >
                 <Link
-                  key={location}
-                  href={`/property-land?location=${location.toLowerCase()}`}
-                  className="group relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl text-center hover:transform hover:scale-105 transition-all duration-300 border border-gray-700/50 hover:border-emerald-500/50 overflow-hidden"
+                  href="/property-land"
+                  className="group inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-teal-500/0 group-hover:from-emerald-500/10 group-hover:to-teal-500/10 transition-all duration-300"></div>
-                  <span className="font-semibold text-white relative z-10">{location}</span>
+                  Explore Properties
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
-              )
-            )}
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 backdrop-blur-md hover:-translate-y-0.5"
+                >
+                  Become a Host
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            {/* Hero Right - 3D Interactive Model */}
+            <motion.div 
+              className="lg:col-span-5 flex justify-center"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+            >
+              <Interactive3DHero />
+            </motion.div>
+
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="relative py-20">
+      {/* Popular Categories */}
+      <section className="relative py-20 border-t border-white/5 bg-black/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-12">
-            <div className="grid md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">1000+</div>
-                <div className="text-gray-400">Active Listings</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">500+</div>
-                <div className="text-gray-400">Happy Tenants</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">50+</div>
-                <div className="text-gray-400">Cities Covered</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">24/7</div>
-                <div className="text-gray-400">Support Available</div>
-              </div>
-            </div>
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Search by <span className="text-primary">Categories</span>
+            </h2>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+              Explore listings tailored specifically to your residential needs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { title: "Student Rooms", desc: "For university students", link: "/anexxes-rooms?type=room", icon: "👤", color: "from-blue-500/10 to-teal-500/10" },
+              { title: "Annexes", desc: "For young couples & professionals", link: "/anexxes-rooms?type=annex", icon: "🏠", color: "from-purple-500/10 to-pink-500/10" },
+              { title: "Houses", desc: "For families & sharing groups", link: "/property-land?type=house", icon: "🏰", color: "from-emerald-500/10 to-teal-500/10" },
+              { title: "Land / Plots", desc: "Build your customized home", link: "/property-land?type=land", icon: "🏔️", color: "from-orange-500/10 to-red-500/10" }
+            ].map((cat, i) => (
+              <Link 
+                key={i} 
+                href={cat.link}
+                className={`glass-card p-6 rounded-3xl text-left flex flex-col justify-between min-h-[180px] bg-gradient-to-br ${cat.color} group`}
+              >
+                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1.5 group-hover:text-primary transition-colors">{cat.title}</h3>
+                  <p className="text-xs text-gray-500">{cat.desc}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Find Your <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Perfect Place</span>?
-          </h2>
-          <p className="text-gray-400 mb-8 text-lg">
-            Join thousands of satisfied users who found their ideal boarding through BoardLanka
-          </p>
-          <Link
-            href="/signup"
-            className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-10 py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105"
-          >
-            Get Started Free
-          </Link>
+      {/* Featured Properties */}
+      <section className="relative py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-16 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1 text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+                <TrendingUp size={12} />
+                <span>Featured Collections</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">
+                Our Most Popular <span className="text-primary">Listings</span>
+              </h2>
+            </div>
+            <Link 
+              href="/property-land" 
+              className="text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1.5 transition-colors group"
+            >
+              View All Properties 
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="glass rounded-3xl h-96 animate-pulse p-4 flex flex-col justify-between">
+                  <div className="h-48 bg-white/5 rounded-2xl" />
+                  <div className="space-y-3 py-4">
+                    <div className="h-6 bg-white/5 rounded w-2/3" />
+                    <div className="h-4 bg-white/5 rounded w-1/2" />
+                  </div>
+                  <div className="h-10 bg-white/5 rounded-xl w-full" />
+                </div>
+              ))}
+            </div>
+          ) : featured.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {featured.map((item) => (
+                <Link
+                  href={`/property-land?id=${item.id}`}
+                  key={item.id}
+                  className="glass-card rounded-3xl overflow-hidden group flex flex-col justify-between h-[430px]"
+                >
+                  <div className="relative h-52 w-full overflow-hidden">
+                    <Image
+                      src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      unoptimized
+                    />
+                    {item.seller?.verified && (
+                      <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+                        <CheckCircle size={10} />
+                        Verified
+                      </div>
+                    )}
+                    <div className="absolute bottom-4 right-4 bg-black/75 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-white">
+                      {item.type.toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+                        <MapPin size={12} className="text-gray-500" />
+                        <span>{item.location}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                      <div>
+                        <span className="text-xl font-bold bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent">
+                          Rs. {item.price.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-gray-500"> /month</span>
+                      </div>
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/5 text-white group-hover:bg-primary group-hover:text-white transition-colors">
+                        <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white/5 rounded-3xl border border-white/10">
+              <span className="text-4xl mb-4 block">🏠</span>
+              <p className="text-gray-400">No properties available at the moment. Try listing your own!</p>
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Popular Cities */}
+      <section className="relative py-20 border-t border-white/5 bg-black/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Explore Popular <span className="text-primary">Locations</span>
+            </h2>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+              Find accommodation options located adjacent to central cities and university districts.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+            {cities.map((city) => (
+              <Link
+                key={city.name}
+                href={`/property-land?location=${city.search}`}
+                className="group relative h-48 rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-end p-4 shadow-lg hover:border-primary/50 transition-all duration-300"
+              >
+                {/* Background Image with Overlay */}
+                <Image
+                  src={city.img}
+                  alt={city.name}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-500 z-0"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+                
+                <div className="relative z-20">
+                  <h3 className="font-bold text-base text-white mb-0.5 group-hover:text-primary transition-colors">
+                    {city.name}
+                  </h3>
+                  <p className="text-[10px] text-gray-400">{city.count}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose BoardLanka */}
+      <section className="relative py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Why Choose <span className="text-primary">BoardLanka</span>?
+            </h2>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+              We focus on building the cleanest rental search platform in Sri Lanka.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Easy Filters",
+                desc: "Search properties by room count, pricing metrics, area proximity and university distance without clutter.",
+                icon: <Search className="text-teal-400" size={24} />
+              },
+              {
+                title: "Verified Listings",
+                desc: "Properties are flagged as verified only after reviewing the seller credentials and documentation.",
+                icon: <ShieldCheck className="text-primary" size={24} />
+              },
+              {
+                title: "Zero Middlemen",
+                desc: "Establish direct contact with the owner via WhatsApp or direct calls. We charge zero brokerage fee.",
+                icon: <MessageSquare className="text-orange-400" size={24} />
+              }
+            ].map((box, i) => (
+              <div 
+                key={i}
+                className="glass-card p-8 rounded-3xl text-left space-y-6 flex flex-col justify-between"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center shadow-inner">
+                  {box.icon}
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-bold text-white">{box.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{box.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="relative py-20 border-y border-white/5 bg-black/40">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-6">
+            <Users size={12} />
+            <span>Success Stories</span>
+          </div>
+
+          {/* Testimonial Panel */}
+          <div className="relative min-h-[220px] flex items-center justify-center">
+            <motion.div
+              key={testimonialIdx}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6"
+            >
+              <p className="text-lg md:text-xl text-gray-300 italic font-medium leading-relaxed">
+                &ldquo;{testimonials[testimonialIdx].quote}&rdquo;
+              </p>
+              
+              <div className="flex items-center justify-center gap-3">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                  <img
+                    src={testimonials[testimonialIdx].avatar}
+                    alt={testimonials[testimonialIdx].author}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-bold text-sm text-white">{testimonials[testimonialIdx].author}</h4>
+                  <p className="text-[10px] text-gray-500">{testimonials[testimonialIdx].role}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Nav Controls */}
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <button 
+              onClick={prevTestimonial}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs text-gray-600 font-semibold">{testimonialIdx + 1} / {testimonials.length}</span>
+            <button 
+              onClick={nextTestimonial}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="relative py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              How It <span className="text-primary">Works</span>
+            </h2>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+              Rent boarding rooms or list your spaces in 3 simplified steps.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-10 relative">
+            
+            {/* Timeline Line */}
+            <div className="hidden md:block absolute top-[28px] inset-x-20 h-px bg-white/10 z-0" />
+
+            {[
+              { step: "01", title: "Search & Filter", desc: "Select rooms, annexes or houses. Filter by specific locations in Colombo, Galle, Homagama and price constraints." },
+              { step: "02", title: "Direct Contact", desc: "View owner contact cards. Direct dial or tap to open WhatsApp to chat with the host instantly. Zero agent fee." },
+              { step: "03", title: "Move In", desc: "Schedule a physical visit, review the facilities, complete payments directly and confirm your boarding details." }
+            ].map((item, idx) => (
+              <div key={idx} className="relative z-10 space-y-4 text-left">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-secondary text-white font-extrabold text-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                  {item.step}
+                </div>
+                <h3 className="text-lg font-bold text-white pt-2">{item.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
