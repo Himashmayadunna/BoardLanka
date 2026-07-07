@@ -74,6 +74,51 @@ const priceRanges = [
   { min: 50000, max: Infinity, label: "Over Rs. 50K" },
 ];
 
+const mockAnnexesRooms: Property[] = [
+  {
+    id: 1,
+    title: "Premium Student Annex near Moratuwa University",
+    location: "Katubedda, Moratuwa",
+    price: 15000,
+    type: "annex",
+    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"],
+    bedrooms: 1,
+    bathrooms: 1,
+    seller: { verified: true, name: "Seller 1", phone: "0770000000", whatsapp: "0770000000", email: null },
+    amenities: [],
+    description: "Sample description",
+    available: true
+  },
+  {
+    id: 2,
+    title: "Cozy Single Annex in Homagama",
+    location: "Homagama, Colombo",
+    price: 22000,
+    type: "annex",
+    images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800"],
+    bedrooms: 1,
+    bathrooms: 1,
+    seller: { verified: true, name: "Seller 2", phone: "0770000001", whatsapp: "0770000001", email: null },
+    amenities: [],
+    description: "Sample description",
+    available: true
+  },
+  {
+    id: 3,
+    title: "Fully Furnished Studio Annex - Galle",
+    location: "Galle Fort, Galle",
+    price: 25000,
+    type: "annex",
+    images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"],
+    bedrooms: 1,
+    bathrooms: 1,
+    seller: { verified: false, name: "Seller 3", phone: "0770000002", whatsapp: "0770000002", email: null },
+    amenities: [],
+    description: "Sample description",
+    available: true
+  }
+];
+
 function AnnexesHousesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -85,7 +130,7 @@ function AnnexesHousesContent() {
   // Active Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
-  const [selectedType, setSelectedType] = useState("");
+  const [selectedType, setSelectedType] = useState("annex");
   const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
 
@@ -97,6 +142,15 @@ function AnnexesHousesContent() {
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [calendarDate, setCalendarDate] = useState("");
   const [panX, setPanX] = useState(50); // 360 viewer simulated drag percentage
+
+  // Problem Reporting states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportIssueType, setReportIssueType] = useState("Maintenance");
+  const [reportTitle, setReportTitle] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSuccessMsg, setReportSuccessMsg] = useState("");
+  const [reportErrorMsg, setReportErrorMsg] = useState("");
   
   const panoramaRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -104,18 +158,31 @@ function AnnexesHousesContent() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const storedFavs = localStorage.getItem("favorites");
+    if (storedFavs) {
+      try {
+        setFavorites(JSON.parse(storedFavs));
+      } catch (e) {
+        console.error("Error loading favorites from localStorage:", e);
+      }
+    }
+  }, []);
+
   // Load properties
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${apiUrl}/api/properties?type=annex,room`);
+        const res = await fetch(`${apiUrl}/api/properties?type=annex`);
         if (!res.ok) throw new Error("Failed to fetch listings");
         const data = await res.json();
         setProperties(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
-        setError("Could not load properties. Please try again.");
+        console.warn("Failed to load properties from API. Using local mock data fallback.", err);
+        setProperties(mockAnnexesRooms);
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -131,7 +198,7 @@ function AnnexesHousesContent() {
     const search = searchParams.get("search");
 
     if (location) setSelectedArea(location.toLowerCase());
-    if (type) setSelectedType(type.toLowerCase());
+    setSelectedType("annex");
     if (search) setSearchQuery(search);
     
     if (id) {
@@ -152,9 +219,18 @@ function AnnexesHousesContent() {
         setCurrentImageIdx(0);
         setActiveTab("details");
         setShowContactDetails(false);
+      } else {
+        throw new Error("Failed to fetch details");
       }
     } catch (err) {
-      console.error("Error loading property details:", err);
+      console.warn("Error loading property details from API, searching local data:", err);
+      const localProp = properties.find(p => String(p.id) === String(id));
+      if (localProp) {
+        setSelectedProperty(localProp);
+        setCurrentImageIdx(0);
+        setActiveTab("details");
+        setShowContactDetails(false);
+      }
     } finally {
       setLoadingDetail(false);
     }
@@ -180,9 +256,11 @@ function AnnexesHousesContent() {
 
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id]
-    );
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id];
+      localStorage.setItem("favorites", JSON.stringify(next));
+      return next;
+    });
   };
 
   const handleOpenDetail = (id: string | number) => {
@@ -191,6 +269,55 @@ function AnnexesHousesContent() {
 
   const handleCloseDetail = () => {
     router.push(window.location.pathname);
+  };
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingReport(true);
+    setReportErrorMsg("");
+    setReportSuccessMsg("");
+
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setReportErrorMsg("You must be signed in to submit a problem report.");
+      setIsSubmittingReport(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiUrl}/api/problems`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          propertyId: selectedProperty?.id,
+          propertyTitle: selectedProperty?.title,
+          issueType: reportIssueType,
+          title: reportTitle,
+          description: reportDescription,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to file report");
+      }
+
+      setReportSuccessMsg("Issue filed successfully! The host and team will review it.");
+      setReportTitle("");
+      setReportDescription("");
+      
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportSuccessMsg("");
+      }, 2500);
+    } catch (err: any) {
+      setReportErrorMsg(err.message || "Something went wrong.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
   };
 
   // Image Navigation
@@ -236,16 +363,16 @@ function AnnexesHousesContent() {
         {/* Page Title */}
         <div className="text-center max-w-3xl mx-auto mb-10">
           <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-3">
-            Luxury <span className="text-primary">Annexes & Rooms</span>
+            Luxury <span className="text-primary">Annexes</span>
           </h1>
           <p className="text-gray-400 text-sm md:text-base">
-            Find the perfect accommodation near universities and major technology parks.
+            Find the perfect annex near universities and major technology parks.
           </p>
         </div>
 
         {/* Filters Panel */}
         <div className="glass-card p-6 rounded-3xl mb-8 flex flex-col gap-5 border border-white/5 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* Search Input */}
             <div className="relative">
@@ -266,19 +393,6 @@ function AnnexesHousesContent() {
               className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-sm transition-all appearance-none cursor-pointer"
             >
               {locationOptions.map(opt => (
-                <option key={opt.value} value={opt.value} className="bg-gray-900 text-white">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Type Filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-sm transition-all appearance-none cursor-pointer"
-            >
-              {typeOptions.map(opt => (
                 <option key={opt.value} value={opt.value} className="bg-gray-900 text-white">
                   {opt.label}
                 </option>
@@ -325,7 +439,7 @@ function AnnexesHousesContent() {
           </div>
         ) : filtered.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-8">
-            {filtered.map((item) => (
+            {filtered.map((item, index) => (
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item.id)}
@@ -336,6 +450,7 @@ function AnnexesHousesContent() {
                     src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
                     alt={item.title}
                     fill
+                    priority={index === 0}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     unoptimized
                   />
@@ -756,6 +871,23 @@ function AnnexesHousesContent() {
                       )}
                     </div>
 
+                    {/* Report problem button */}
+                    <button
+                      onClick={() => {
+                        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+                        if (!token) {
+                          alert("Please sign in first to report property problems.");
+                          router.push("/signin");
+                          return;
+                        }
+                        setShowReportModal(true);
+                      }}
+                      className="w-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <ShieldAlert size={14} />
+                      Report a Problem
+                    </button>
+
                     {/* Safety Tip warning badge */}
                     <div className="flex gap-2 p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl text-amber-400">
                       <ShieldAlert size={16} className="flex-shrink-0 mt-0.5" />
@@ -771,6 +903,96 @@ function AnnexesHousesContent() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Report Problem Modal Overlay */}
+      {showReportModal && selectedProperty && (
+        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-gray-950 border border-white/10 p-6 md:p-8 rounded-3xl w-full max-w-md shadow-2xl relative space-y-5 animate-slide-up text-left">
+            <button 
+              onClick={() => {
+                setShowReportModal(false);
+                setReportSuccessMsg("");
+                setReportErrorMsg("");
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Report Property Issue</h3>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Describe the problem you are facing with <strong>{selectedProperty.title}</strong>.
+              </p>
+            </div>
+
+            {reportSuccessMsg ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/25 p-4 rounded-xl text-emerald-400 text-xs font-semibold text-center">
+                {reportSuccessMsg}
+              </div>
+            ) : (
+              <form onSubmit={handleReportSubmit} className="space-y-4">
+                {reportErrorMsg && (
+                  <div className="bg-red-500/10 border border-red-500/25 p-3 rounded-xl text-red-400 text-xs font-semibold">
+                    {reportErrorMsg}
+                  </div>
+                )}
+
+                {/* Issue Type */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-400">Issue Category</label>
+                  <select
+                    value={reportIssueType}
+                    onChange={(e) => setReportIssueType(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 cursor-pointer"
+                  >
+                    <option value="Maintenance" className="bg-gray-900 text-white">Maintenance (Water, Electricity, Plumbing)</option>
+                    <option value="Landlord Issue" className="bg-gray-900 text-white">Host / Landlord Behavior</option>
+                    <option value="Pricing/Payment" className="bg-gray-900 text-white">Billing or Price Dispute</option>
+                    <option value="Listing Info Inaccuracy" className="bg-gray-900 text-white">Inaccurate Listing Details</option>
+                    <option value="General Web Problem" className="bg-gray-900 text-white">General Website Bug</option>
+                    <option value="Other" className="bg-gray-900 text-white">Other Problem</option>
+                  </select>
+                </div>
+
+                {/* Title */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-400">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={reportTitle}
+                    onChange={(e) => setReportTitle(e.target.value)}
+                    placeholder="e.g., Water pressure is too low"
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-400">Detailed Description</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    placeholder="Provide details about the issue so the owner or administration can address it."
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingReport}
+                  className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

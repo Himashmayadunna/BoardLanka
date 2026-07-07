@@ -39,6 +39,7 @@ export default function Footer() {
                   fill
                   sizes="32px"
                   className="object-cover"
+                  unoptimized
                 />
               </div>
               <span className="text-white font-bold text-lg tracking-tight">
@@ -88,10 +89,7 @@ export default function Footer() {
             <h4 className="text-white font-semibold text-sm tracking-wide uppercase">Categories</h4>
             <ul className="space-y-2.5 text-sm text-gray-400">
               <li>
-                <Link href="/anexxes-rooms?type=room" className="hover:text-primary transition-colors">Student Rooms</Link>
-              </li>
-              <li>
-                <Link href="/anexxes-rooms?type=annex" className="hover:text-primary transition-colors">Modern Annexes</Link>
+                <Link href="/anexxes-rooms" className="hover:text-primary transition-colors">Modern Annexes</Link>
               </li>
               <li>
                 <Link href="/property-land?type=house" className="hover:text-primary transition-colors">Luxury Houses</Link>

@@ -13,6 +13,8 @@ interface UserData {
   lastName: string;
   accountType: string;
   marketingUpdates: boolean;
+  phone?: string;
+  bio?: string;
 }
 
 export default function EditProfilePage() {
@@ -23,6 +25,8 @@ export default function EditProfilePage() {
     lastName: "",
     accountType: "buyer",
     marketingUpdates: false,
+    phone: "",
+    bio: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -33,15 +37,17 @@ export default function EditProfilePage() {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       setFormData({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        accountType: userData.accountType,
-        marketingUpdates: userData.marketingUpdates,
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        accountType: userData.accountType || "buyer",
+        marketingUpdates: userData.marketingUpdates || false,
+        phone: userData.phone || "",
+        bio: userData.bio || "",
       });
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -54,14 +60,43 @@ export default function EditProfilePage() {
     setIsSaving(true);
     setMessage(null);
 
-    try {
-      const updatedUser = {
-        ...user,
-        ...formData,
-      };
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setMessage({
+        type: "error",
+        text: "You are not authenticated. Redirecting...",
+      });
+      setTimeout(() => {
+        router.push("/signin");
+      }, 1500);
+      return;
+    }
 
-      // In the original, it updates local storage and redirects
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
+      const res = await fetch(`${apiUrl}/api/auth/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          accountType: formData.accountType,
+          marketingUpdates: formData.marketingUpdates,
+          phone: formData.phone,
+          bio: formData.bio,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to update profile details");
+      }
+
+      // Update local storage cache
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       setMessage({
         type: "success",
@@ -71,10 +106,10 @@ export default function EditProfilePage() {
       setTimeout(() => {
         router.push("/profile");
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       setMessage({
         type: "error",
-        text: "Failed to update profile details.",
+        text: error.message || "Failed to update profile details.",
       });
       console.error("Profile update error:", error);
     } finally {
@@ -167,6 +202,32 @@ export default function EditProfilePage() {
                 <option value="buyer" className="bg-gray-900 text-white">Room Seeker</option>
                 <option value="seller" className="bg-gray-900 text-white">Property Host / Owner</option>
               </select>
+            </div>
+
+            {/* Phone Number */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-semibold text-gray-400">Phone Number</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+94 77 123 4567"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+
+            {/* Short Bio */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-semibold text-gray-400">Short Bio</label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell us a bit about yourself..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all resize-none"
+              />
             </div>
 
             {/* Marketing Updates */}

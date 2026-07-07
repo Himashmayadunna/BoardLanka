@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { 
   Sun, 
   Moon, 
@@ -22,7 +22,7 @@ interface User {
   accountType: string;
 }
 
-export default function Navbar() {
+function NavbarContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +33,7 @@ export default function Navbar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Handle scroll class toggle
   useEffect(() => {
@@ -108,9 +109,9 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "Rooms", href: "/anexxes-rooms?type=room" },
-    { label: "Annexes", href: "/anexxes-rooms?type=annex" },
+    { label: "Annexes", href: "/anexxes-rooms" },
     { label: "Houses", href: "/property-land?type=house" },
+    { label: "Lands", href: "/property-land?type=land" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];
@@ -136,6 +137,7 @@ export default function Navbar() {
                 sizes="40px"
                 className="object-cover"
                 priority
+                unoptimized
               />
             </div>
             <span className="text-white font-bold text-xl tracking-tight hidden sm:block">
@@ -146,7 +148,13 @@ export default function Navbar() {
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-1.5">
             {navItems.map((item) => {
-              const isActive = pathname === item.href.split("?")[0];
+              const itemUrl = new URL(item.href, "http://localhost");
+              const itemPathname = itemUrl.pathname;
+              const itemType = itemUrl.searchParams.get("type");
+              const currentType = searchParams.get("type");
+              
+              const isActive = pathname === itemPathname && (!itemType || currentType === itemType);
+              
               return (
                 <Link
                   key={item.label}
@@ -373,5 +381,19 @@ export default function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={
+      <header className="fixed top-0 inset-x-0 z-50 bg-transparent py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-10" />
+        </div>
+      </header>
+    }>
+      <NavbarContent />
+    </Suspense>
   );
 }

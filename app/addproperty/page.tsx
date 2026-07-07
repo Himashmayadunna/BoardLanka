@@ -52,7 +52,7 @@ export default function AddPropertyPage() {
     title: "",
     location: "",
     area: "colombo",
-    type: "room",
+    type: "annex",
     price: 0,
     advancePayment: 0,
     bedrooms: 1,
@@ -273,7 +273,7 @@ export default function AddPropertyPage() {
           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
             <div>
               <h1 className="text-2xl font-extrabold text-white">Add New Listing</h1>
-              <p className="text-xs text-gray-400">Host your property or room space in Colombo and Galle</p>
+              <p className="text-xs text-gray-400">Host your property or annex in Colombo and Galle</p>
             </div>
             <span className="text-xs bg-primary-glow text-primary font-bold px-3 py-1.5 rounded-full">
               Step {step} of 4
@@ -332,7 +332,7 @@ export default function AddPropertyPage() {
                         name="title"
                         value={formData.title}
                         onChange={handleInputChange}
-                        placeholder="e.g., Luxury Annex Room near University of Moratuwa"
+                        placeholder="e.g., Luxury Annex near University of Moratuwa"
                         required
                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
                       />
@@ -347,7 +347,6 @@ export default function AddPropertyPage() {
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-xs transition-all appearance-none cursor-pointer"
                         >
-                          <option value="room" className="bg-gray-900 text-white">Student Room</option>
                           <option value="annex" className="bg-gray-900 text-white">Annex</option>
                           <option value="house" className="bg-gray-900 text-white">House</option>
                           <option value="land" className="bg-gray-900 text-white">Land</option>

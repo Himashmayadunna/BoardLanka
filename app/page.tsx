@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { 
   ArrowRight, 
   MapPin, 
@@ -18,7 +19,6 @@ import {
   TrendingUp
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
-import Interactive3DHero from "@/app/components/Interactive3DHero";
 
 interface Property {
   id: string | number;
@@ -63,10 +63,67 @@ const testimonials = [
   }
 ];
 
+const mockProperties: Property[] = [
+  {
+    id: "mock-1",
+    title: "Modern Annex near University of Moratuwa",
+    location: "Katubedda, Moratuwa",
+    price: 18000,
+    type: "annex",
+    images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"],
+    bedrooms: 1,
+    bathrooms: 1,
+    seller: { verified: true }
+  },
+  {
+    id: "mock-2",
+    title: "Luxury Sharing Room for Students - Homagama",
+    location: "Pitipana, Homagama",
+    price: 12000,
+    type: "room",
+    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"],
+    bedrooms: 2,
+    bathrooms: 1,
+    seller: { verified: true }
+  },
+  {
+    id: "mock-3",
+    title: "Premium 3-Bedroom Family House",
+    location: "Thalawathugoda, Colombo",
+    price: 75000,
+    type: "house",
+    images: ["https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800"],
+    bedrooms: 3,
+    bathrooms: 2,
+    seller: { verified: true }
+  }
+];
+
 export default function Home() {
+  const router = useRouter();
   const [featured, setFeatured] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 15,
+        y: (e.clientY / window.innerHeight - 0.5) * 15,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/property-land?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   // Fetch properties from local API
   useEffect(() => {
@@ -77,9 +134,12 @@ export default function Home() {
         if (res.ok) {
           const data = (await res.json()) as Property[];
           setFeatured(data.slice(0, 3)); // show first 3 items
+        } else {
+          throw new Error("Failed to fetch properties from API");
         }
       } catch (err) {
-        console.error("Failed to load featured properties:", err);
+        console.warn("Failed to load featured properties from API. Using local mock data fallback.", err);
+        setFeatured(mockProperties);
       } finally {
         setLoading(false);
       }
@@ -113,17 +173,43 @@ export default function Home() {
       <MeshBackground />
 
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Hero Left */}
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 md:py-24 lg:py-32">
+        {/* Full covered 3D background image with movement */}
+        <motion.div 
+          className="absolute inset-0 z-0 overflow-hidden"
+          style={{
+            x: mousePos.x,
+            y: mousePos.y,
+          }}
+          transition={{ type: "tween", ease: "easeOut", duration: 0.5 }}
+        >
+          <div className="absolute inset-0 animate-slow-drift">
+            <Image
+              src="/hero-3d-bg.png"
+              alt="BoardLanka Premium 3D Background"
+              fill
+              priority
+              className="object-cover object-center"
+              unoptimized
+            />
+          </div>
+          {/* Multi-layered dark glass overlay for contrast and readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/35 mix-blend-multiply animate-fade-in" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/20" />
+        </motion.div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="max-w-3xl">
+            {/* Left Glass Card containing details */}
             <motion.div 
-              className="lg:col-span-7 space-y-8 text-left"
+              className="glass-card backdrop-blur-md bg-black/45 border border-white/10 p-5 sm:p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl relative overflow-hidden space-y-6 md:space-y-8"
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
             >
+              {/* Decorative corner glow */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+
               <motion.div 
                 variants={fadeInUp} 
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-glow border border-primary/20 text-xs font-semibold text-primary"
@@ -134,51 +220,65 @@ export default function Home() {
 
               <motion.h1 
                 variants={fadeInUp} 
-                className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]"
+                className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.15]"
               >
                 Find Your Perfect <br />
-                <span className="bg-gradient-to-r from-primary via-teal-400 to-secondary bg-clip-text text-transparent">
-                  Room, Annex or House
+                <span className="bg-gradient-to-r from-primary via-teal-400 to-secondary bg-clip-text text-transparent animate-pulse">
+                  Annex or House
                 </span>
               </motion.h1>
 
               <motion.p 
                 variants={fadeInUp} 
-                className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-2xl"
+                className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed"
               >
                 Helping university students, working professionals and modern families discover verified boarding places and luxury homes across Sri Lanka.
               </motion.p>
 
+              {/* Quick Search Widget */}
+              <motion.form 
+                variants={fadeInUp}
+                onSubmit={handleSearchSubmit}
+                className="flex flex-col sm:flex-row gap-3 bg-white/5 border border-white/10 p-2 sm:p-2.5 rounded-2xl md:rounded-[1.5rem] backdrop-blur-lg focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary-glow/20 transition-all"
+              >
+                <div className="flex-1 flex items-center gap-2 px-1 sm:px-3">
+                  <Search size={18} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Enter city or university (e.g. Homagama)..."
+                    className="w-full bg-transparent border-0 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-0 py-2"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl md:rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 w-full sm:w-auto"
+                >
+                  Search
+                </button>
+              </motion.form>
+
+              {/* Action Links */}
               <motion.div 
                 variants={fadeInUp} 
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row items-center gap-3.5 pt-2"
               >
                 <Link
                   href="/property-land"
-                  className="group inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5"
+                  className="group inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 w-full sm:w-auto text-center font-semibold"
                 >
                   Explore Properties
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 backdrop-blur-md hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 backdrop-blur-md hover:-translate-y-0.5 w-full sm:w-auto text-center font-semibold"
                 >
                   Become a Host
                 </Link>
               </motion.div>
             </motion.div>
-
-            {/* Hero Right - 3D Interactive Model */}
-            <motion.div 
-              className="lg:col-span-5 flex justify-center"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-            >
-              <Interactive3DHero />
-            </motion.div>
-
           </div>
         </div>
       </section>
@@ -195,10 +295,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { title: "Student Rooms", desc: "For university students", link: "/anexxes-rooms?type=room", icon: "👤", color: "from-blue-500/10 to-teal-500/10" },
-              { title: "Annexes", desc: "For young couples & professionals", link: "/anexxes-rooms?type=annex", icon: "🏠", color: "from-purple-500/10 to-pink-500/10" },
+              { title: "Annexes", desc: "For young couples & professionals", link: "/anexxes-rooms", icon: "🏠", color: "from-purple-500/10 to-pink-500/10" },
               { title: "Houses", desc: "For families & sharing groups", link: "/property-land?type=house", icon: "🏰", color: "from-emerald-500/10 to-teal-500/10" },
               { title: "Land / Plots", desc: "Build your customized home", link: "/property-land?type=land", icon: "🏔️", color: "from-orange-500/10 to-red-500/10" }
             ].map((cat, i) => (
