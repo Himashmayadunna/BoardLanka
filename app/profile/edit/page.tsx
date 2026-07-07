@@ -2,24 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { User, ShieldAlert, ArrowLeft, Save, X } from "lucide-react";
+import MeshBackground from "@/app/components/MeshBackground";
 
-interface User {
+interface UserData {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   accountType: string;
   marketingUpdates: boolean;
+  phone?: string;
+  bio?: string;
 }
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     accountType: "buyer",
     marketingUpdates: false,
+    phone: "",
+    bio: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -30,15 +37,17 @@ export default function EditProfilePage() {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       setFormData({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        accountType: userData.accountType,
-        marketingUpdates: userData.marketingUpdates,
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        accountType: userData.accountType || "buyer",
+        marketingUpdates: userData.marketingUpdates || false,
+        phone: userData.phone || "",
+        bio: userData.bio || "",
       });
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -49,27 +58,58 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setMessage(null);
+
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setMessage({
+        type: "error",
+        text: "You are not authenticated. Redirecting...",
+      });
+      setTimeout(() => {
+        router.push("/signin");
+      }, 1500);
+      return;
+    }
 
     try {
-      const updatedUser = {
-        ...user,
-        ...formData,
-      };
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
+      const res = await fetch(`${apiUrl}/api/auth/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          accountType: formData.accountType,
+          marketingUpdates: formData.marketingUpdates,
+          phone: formData.phone,
+          bio: formData.bio,
+        }),
+      });
 
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to update profile details");
+      }
+
+      // Update local storage cache
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       setMessage({
         type: "success",
-        text: "Profile updated successfully!",
+        text: "Profile updated successfully! Redirecting...",
       });
 
       setTimeout(() => {
         router.push("/profile");
-      }, 2000);
-    } catch (error) {
+      }, 1500);
+    } catch (error: any) {
       setMessage({
         type: "error",
-        text: "Failed to update profile",
+        text: error.message || "Failed to update profile details.",
       });
       console.error("Profile update error:", error);
     } finally {
@@ -79,120 +119,164 @@ export default function EditProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Edit Profile</h1>
-          <p className="text-gray-400 mb-6">Update your profile information</p>
+    <div className="relative min-h-screen pt-24 pb-16">
+      <MeshBackground />
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Back Link */}
+        <div className="mb-6">
+          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-bold transition-all">
+            <ArrowLeft size={14} />
+            Back to Profile
+          </Link>
+        </div>
+
+        <div className="glass p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6">
+          
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-1.5">Edit Profile</h1>
+            <p className="text-xs text-gray-400">Update your account display metadata details</p>
+          </div>
 
           {message && (
             <div
-              className={`mb-6 p-4 rounded-lg ${
+              className={`p-4 rounded-2xl text-xs font-semibold ${
                 message.type === "success"
-                  ? "bg-green-500/20 border border-green-500/50 text-green-400"
-                  : "bg-red-500/20 border border-red-500/50 text-red-400"
+                  ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
+                  : "bg-red-500/10 border border-red-500/25 text-red-400"
               }`}
             >
               {message.text}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  First Name *
-                </label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* First Name */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs font-semibold text-gray-400">First Name</label>
                 <input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  placeholder="Enter your first name"
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300"
+                  placeholder="John"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Last Name *
-                </label>
+              {/* Last Name */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs font-semibold text-gray-400">Last Name</label>
                 <input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  placeholder="Enter your last name"
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300"
+                  placeholder="Doe"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Account Type *
-              </label>
+            {/* Account Type */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-semibold text-gray-400">Account Type</label>
               <select
                 name="accountType"
                 value={formData.accountType}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-xs transition-all appearance-none cursor-pointer"
               >
-                <option value="buyer">Buyer</option>
-                <option value="seller">Seller</option>
+                <option value="buyer" className="bg-gray-900 text-white">Room Seeker</option>
+                <option value="seller" className="bg-gray-900 text-white">Property Host / Owner</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-gray-900/50 rounded-xl border border-gray-600/50">
+            {/* Phone Number */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-semibold text-gray-400">Phone Number</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+94 77 123 4567"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+
+            {/* Short Bio */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-semibold text-gray-400">Short Bio</label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell us a bit about yourself..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all resize-none"
+              />
+            </div>
+
+            {/* Marketing Updates */}
+            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
               <input
                 type="checkbox"
                 name="marketingUpdates"
                 checked={formData.marketingUpdates}
                 onChange={handleChange}
                 id="marketing"
-                className="w-5 h-5 rounded accent-emerald-500"
+                className="rounded accent-primary border-white/10 bg-white/5 w-4 h-4 cursor-pointer"
               />
-              <label htmlFor="marketing" className="text-gray-300 cursor-pointer">
-                Subscribe to marketing updates and special offers
+              <label htmlFor="marketing" className="text-xs text-gray-300 cursor-pointer select-none">
+                Subscribe to active alerts and promotional property listings.
               </label>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            {/* Actions */}
+            <div className="flex gap-4 pt-4 border-t border-white/5">
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="flex-1 bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-1.5"
               >
+                <Save size={14} />
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/profile")}
-                className="flex-1 bg-gray-700/50 text-gray-300 px-6 py-3 rounded-xl hover:bg-gray-700 transition-all duration-300 font-medium border border-gray-600/50"
+                className="flex-1 bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5"
               >
+                <X size={14} />
                 Cancel
               </button>
             </div>
+
           </form>
 
-          <div className="mt-8 p-4 bg-gray-900/50 rounded-xl border border-gray-600/50">
-            <p className="text-gray-400 text-sm">
-              <strong>Email:</strong> {user.email} (Cannot be changed)
+          {/* Email Lock Notice */}
+          <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex gap-2 text-gray-400">
+            <ShieldAlert size={16} className="text-primary flex-shrink-0 mt-0.5" />
+            <p className="text-[10px] leading-relaxed text-left">
+              <strong>Email Address Locked:</strong> Your email profile address (<strong>{user.email}</strong>) is tied to the central security scope database and cannot be modified.
             </p>
           </div>
+
         </div>
+
       </div>
     </div>
   );

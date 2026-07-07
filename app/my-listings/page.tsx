@@ -1,9 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { 
+  Building, 
+  MapPin, 
+  CheckCircle, 
+  Trash2, 
+  Edit, 
+  PlusCircle, 
+  ChevronLeft, 
+  ChevronRight, 
+  ArrowLeft, 
+  X, 
+  Compass
+} from "lucide-react";
+import MeshBackground from "@/app/components/MeshBackground";
 
 interface Property {
   id: string | number;
@@ -14,7 +28,7 @@ interface Property {
   advancePayment?: number;
   bedrooms: number;
   bathrooms?: number;
-  size?: number;
+  size?: number | string;
   type: string;
   images: string[];
   amenities: string[];
@@ -24,12 +38,12 @@ interface Property {
     name: string;
     phone: string;
     whatsapp: string;
-    email: string;
+    email: string | null;
     verified: boolean;
   };
   available: boolean;
   createdAt?: string;
-  moderationStatus?: 'pending' | 'approved' | 'rejected';
+  moderationStatus?: "pending" | "approved" | "rejected";
 }
 
 interface User {
@@ -45,26 +59,32 @@ function MyListingsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  
+  // Selected Detail states
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [activeTab, setActiveTab] = useState<"details" | "360" | "map">("details");
+  const [showContactDetails, setShowContactDetails] = useState(false);
+  const [panX, setPanX] = useState(50);
+  
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/_/backend';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
 
   useEffect(() => {
     try {
-      const userData = localStorage.getItem('user');
+      const userData = localStorage.getItem("user");
       if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
+        setUser(JSON.parse(userData));
       } else {
-        setError('Please log in to view your listings');
+        setError("Please log in to view your listings.");
       }
     } catch (err) {
-      console.error('Error reading user from localStorage:', err);
-      setError('Failed to load user information');
+      console.error("Error reading user from localStorage:", err);
+      setError("Failed to load user information.");
     }
   }, []);
 
@@ -79,47 +99,37 @@ function MyListingsContent() {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem('token');
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        const token = localStorage.getItem("token");
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
         const response = await fetch(`${apiUrl}/api/properties`, {
-          method: 'GET',
+          method: "GET",
           headers,
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch properties: ${response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error("Failed to fetch listings.");
         const data = await response.json();
 
         let allProperties: Property[] = [];
         if (Array.isArray(data)) {
           allProperties = data;
-        } else if (data && typeof data === 'object') {
+        } else if (data && typeof data === "object") {
           const propertiesList = data.properties || data.data || [];
-          if (Array.isArray(propertiesList)) {
-            allProperties = propertiesList;
-          }
+          if (Array.isArray(propertiesList)) allProperties = propertiesList;
         }
 
-        const sellerId = user.seller_id || user.id || '';
+        const sellerId = user.seller_id || user.id || "";
         const sellerProperties = allProperties.filter(
           (prop) =>
             (sellerId && prop.seller?.id === sellerId) ||
-            (sellerId && prop.seller && typeof prop.seller === 'object' && Object.values(prop.seller).includes(sellerId))
+            (sellerId && prop.seller && typeof prop.seller === "object" && Object.values(prop.seller).includes(sellerId))
         );
 
         setProperties(sellerProperties);
       } catch (err) {
-        console.error('Error fetching properties:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load your listings');
-        setProperties([]);
+        console.error("Error fetching properties:", err);
+        setError(err instanceof Error ? err.message : "Failed to load listings.");
       } finally {
         setLoading(false);
       }
@@ -128,61 +138,64 @@ function MyListingsContent() {
     fetchSellerProperties();
   }, [user, apiUrl]);
 
+  // Fetch full details of a single property (with all images)
+  const fetchSingleDetail = async (id: string | number) => {
+    try {
+      setLoadingDetail(true);
+      const res = await fetch(`${apiUrl}/api/properties/${id}`);
+      if (res.ok) {
+        const data = (await res.json()) as Property;
+        setSelectedProperty(data);
+        setCurrentImageIdx(0);
+        setActiveTab("details");
+        setShowContactDetails(false);
+      }
+    } catch (err) {
+      console.error("Error loading property details:", err);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   const handleDelete = async (propertyId: string | number) => {
     try {
       setDeleting(true);
       setDeleteError(null);
 
-      const token = localStorage.getItem('token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(`${apiUrl}/api/properties/${propertyId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete property: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error("Failed to delete property.");
 
       setProperties(properties.filter((p) => p.id !== propertyId));
       setDeleteConfirm(null);
       setSelectedProperty(null);
     } catch (err) {
-      console.error('Error deleting property:', err);
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete property');
+      console.error("Error deleting property:", err);
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete listing.");
     } finally {
       setDeleting(false);
     }
   };
 
-  const openPropertyDetails = (property: Property) => {
-    setSelectedProperty(property);
-    setCurrentImageIndex(0);
-  };
-
-  const closePropertyDetails = () => {
-    setSelectedProperty(null);
-    setDeleteConfirm(null);
-    setDeleteError(null);
-  };
-
+  // Image Navigation
   const nextImage = () => {
-    if (selectedProperty && selectedProperty.images && selectedProperty.images.length > 0) {
-      setCurrentImageIndex((prev) =>
+    if (selectedProperty) {
+      setCurrentImageIdx(prev => 
         prev === selectedProperty.images.length - 1 ? 0 : prev + 1
       );
     }
   };
 
   const prevImage = () => {
-    if (selectedProperty && selectedProperty.images && selectedProperty.images.length > 0) {
-      setCurrentImageIndex((prev) =>
+    if (selectedProperty) {
+      setCurrentImageIdx(prev => 
         prev === 0 ? selectedProperty.images.length - 1 : prev - 1
       );
     }
@@ -193,26 +206,18 @@ function MyListingsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block">
-            <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-          </div>
-          <p className="text-gray-400 text-lg">Loading your listings...</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-gray-400 text-lg mb-4">{error || 'Please log in to view your listings'}</p>
-          <Link
-            href="/signin"
-            className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300"
-          >
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="glass p-8 rounded-3xl border border-white/10 text-center max-w-sm">
+          <p className="text-gray-400 text-sm mb-6">{error || "Please log in to manage listings."}</p>
+          <Link href="/signin" className="bg-primary text-white text-xs font-bold px-6 py-3 rounded-xl transition-all">
             Go to Sign In
           </Link>
         </div>
@@ -221,262 +226,208 @@ function MyListingsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
-      <div className="relative py-12">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 -left-20 w-60 h-60 bg-teal-500/10 rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">My Listings</h1>
-          <p className="text-gray-400 text-center text-lg">Manage your property listings</p>
-        </div>
-      </div>
+    <div className="relative min-h-screen pt-24 pb-16">
+      <MeshBackground />
 
-      {error && properties.length === 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400">
-            <p className="font-medium">Error</p>
-            <p className="text-sm mt-1">{error}</p>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Back Link */}
+        <div className="mb-6">
+          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-bold transition-all">
+            <ArrowLeft size={14} />
+            Back to Dashboard
+          </Link>
         </div>
-      )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-emerald-400/80 text-sm font-medium mb-1">Total Listings</p>
-                <p className="text-emerald-400 text-4xl font-bold">{totalListings}</p>
-              </div>
-              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 11l4-2m-5-10L9 3m6 11l4 2m0-5V3m0 11V3"
-                  />
-                </svg>
-              </div>
+        {/* Header Title */}
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-3">
+            Manage <span className="text-primary">My Listings</span>
+          </h1>
+          <p className="text-gray-400 text-sm md:text-base">
+            Create, edit, or remove properties currently hosted across BoardLanka.
+          </p>
+        </div>
+
+        {/* Stats metrics */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          
+          <div className="glass p-6 rounded-3xl border border-white/10 text-left flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-gray-500 font-semibold uppercase">Total Listings</p>
+              <h3 className="text-3xl font-extrabold text-white mt-1">{totalListings}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-primary-glow text-primary flex items-center justify-center shadow-inner">
+              <Building size={20} />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-teal-500/20 to-teal-500/10 border border-teal-500/30 rounded-2xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-teal-400/80 text-sm font-medium mb-1">Active Listings</p>
-                <p className="text-teal-400 text-4xl font-bold">{activeListings}</p>
-              </div>
-              <div className="w-16 h-16 bg-teal-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
+          <div className="glass p-6 rounded-3xl border border-white/10 text-left flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-gray-500 font-semibold uppercase">Active Listings</p>
+              <h3 className="text-3xl font-extrabold text-primary mt-1">{activeListings}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-primary-glow text-primary flex items-center justify-center shadow-inner">
+              <CheckCircle size={20} />
             </div>
           </div>
+
         </div>
 
+        {/* Add listing shortcut */}
         <div className="mb-8 flex justify-end">
           <Link
             href="/addproperty"
-            className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 flex items-center gap-2"
+            className="bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center gap-1.5"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <PlusCircle size={16} />
             Add New Property
           </Link>
         </div>
 
+        {/* Listings catalog */}
         {properties.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {properties.map((property) => (
               <div
                 key={property.id}
-                className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden hover:border-emerald-500/50 transition-all duration-300 group"
+                className="glass-card rounded-3xl overflow-hidden group flex flex-col justify-between h-[420px]"
               >
-                <div className="relative h-48">
-                  <Image
-                    src={property.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'}
+                <div 
+                  onClick={() => fetchSingleDetail(property.id)}
+                  className="relative h-48 w-full overflow-hidden bg-white/5 cursor-pointer"
+                >
+                  <img
+                    src={property.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
                     alt={property.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    unoptimized
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 left-3 flex gap-2">
+                  
+                  {/* Status Overlay */}
+                  <div className="absolute top-4 left-4 flex gap-2">
                     {property.moderationStatus && (
-                      <div
-                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
-                          property.moderationStatus === 'approved'
-                            ? 'bg-emerald-500 text-white'
-                            : property.moderationStatus === 'rejected'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-yellow-500 text-gray-900'
-                        }`}
-                      >
-                        {property.moderationStatus === 'approved' && (
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                        {property.moderationStatus === 'rejected' && (
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd"
-                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                        {property.moderationStatus === 'pending' && (
-                          <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        )}
-                        {property.moderationStatus.charAt(0).toUpperCase() +
-                          property.moderationStatus.slice(1)}
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold shadow-md capitalize ${
+                        property.moderationStatus === "approved"
+                          ? "bg-emerald-500 text-white"
+                          : property.moderationStatus === "rejected"
+                          ? "bg-red-500 text-white"
+                          : "bg-amber-500 text-gray-950"
+                      }`}>
+                        {property.moderationStatus}
                       </div>
                     )}
                   </div>
-                  <div className="absolute top-3 right-3 bg-gray-900/80 backdrop-blur px-3 py-1 rounded-full text-sm font-medium text-white">
-                    {property.bedrooms} Bed{property.bedrooms > 1 ? 's' : ''}
-                  </div>
+
                   {!property.available && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">Unavailable</span>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                      <span className="text-white font-extrabold text-sm uppercase tracking-wide">Deactivated</span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-5">
-                  <h3 className="font-bold text-lg text-white mb-2 line-clamp-1">{property.title}</h3>
-                  <p className="text-gray-400 text-sm mb-3 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    {property.location}
-                  </p>
-
-                  <div className="mb-4">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                      Rs. {property.price.toLocaleString()}
-                    </span>
-                    <span className="text-gray-500 text-sm">/month</span>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div className="space-y-1.5 text-left">
+                    <h3 
+                      onClick={() => fetchSingleDetail(property.id)}
+                      className="font-bold text-base text-white line-clamp-1 group-hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {property.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      <MapPin size={12} className="text-primary" />
+                      <span>{property.location}</span>
+                    </div>
+                    <div className="mt-2.5">
+                      <span className="text-lg font-bold text-primary">Rs. {property.price.toLocaleString()}</span>
+                      <span className="text-[10px] text-gray-500">/month</span>
+                    </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  {/* Actions */}
+                  <div className="flex gap-2.5 pt-4 border-t border-white/5 mt-4">
                     <button
-                      onClick={() => openPropertyDetails(property)}
-                      className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm"
+                      onClick={() => fetchSingleDetail(property.id)}
+                      className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-2.5 rounded-xl font-bold text-[10px] transition-all"
                     >
-                      View Details
+                      Details
                     </button>
+                    {/* Note: The edit link matches the original link. If they decide to build edit layout later, it's there. */}
                     <Link
                       href={`/my-listings/${property.id}/edit`}
-                      className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm text-center"
+                      className="flex-1 bg-blue-500/10 hover:bg-blue-600 border border-blue-500/20 text-blue-400 hover:text-white py-2.5 rounded-xl font-bold text-[10px] text-center transition-all"
                     >
                       Edit
                     </Link>
                     <button
                       onClick={() => setDeleteConfirm(String(property.id))}
-                      className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm"
+                      className="flex-1 bg-red-500/10 hover:bg-red-600 border border-red-500/20 text-red-400 hover:text-white py-2.5 rounded-xl font-bold text-[10px] transition-all flex items-center justify-center"
                     >
-                      Delete
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
+
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <span className="text-6xl mb-4 block">🏠</span>
-            <h3 className="text-xl font-semibold text-white mb-2">No listings yet</h3>
-            <p className="text-gray-400 mb-6">Start by adding your first property to get started</p>
+          <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
+            <span className="text-5xl mb-4 block">🏘️</span>
+            <h3 className="text-xl font-bold text-white mb-2">No properties listed yet</h3>
+            <p className="text-gray-400 max-w-sm mx-auto text-sm mb-6">
+              Start by listing your university room, annex, or villa plot on the platform.
+            </p>
             <Link
               href="/addproperty"
-              className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300"
+              className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold text-xs shadow-md transition-all inline-flex items-center gap-1.5"
             >
-              Add Your First Property
+              <PlusCircle size={16} />
+              Host Your First Space
             </Link>
           </div>
         )}
+
       </div>
 
+      {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-md w-full p-6">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4v2m0 5v1m7.08-6.081A9.001 9.001 0 1112.08 3M9 11h6"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Delete Property</h3>
-              <p className="text-gray-400">
-                Are you sure you want to delete this property? This action cannot be undone.
-              </p>
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass border border-white/10 rounded-3xl max-w-md w-full p-6 text-center animate-slide-up shadow-2xl">
+            <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center rounded-2xl mx-auto mb-4">
+              <Trash2 size={24} />
             </div>
+            
+            <h3 className="text-lg font-bold text-white mb-2">Remove Property Listing</h3>
+            <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+              Are you sure you want to permanently remove this property listing from BoardLanka? This action cannot be undone.
+            </p>
 
             {deleteError && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
-                <p className="text-red-400 text-sm">{deleteError}</p>
+              <div className="p-3.5 bg-red-500/10 border border-red-500/25 rounded-2xl text-red-400 text-xs mb-4 text-left font-medium">
+                {deleteError}
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={() => {
                   setDeleteConfirm(null);
                   setDeleteError(null);
                 }}
                 disabled={deleting}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50"
+                className="flex-1 bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 py-3 rounded-xl font-bold text-xs transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={deleting}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-xs transition-all shadow-md shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {deleting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Deleting...
-                  </>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  'Delete'
+                  "Delete Property"
                 )}
               </button>
             </div>
@@ -484,251 +435,191 @@ function MyListingsContent() {
         </div>
       )}
 
+      {/* Immersive Detail Modal Overlay */}
       {selectedProperty && !deleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={closePropertyDetails}
-              className="absolute top-4 right-4 bg-white/90 backdrop-blur rounded-full p-2 hover:bg-white transition-colors z-10"
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="relative bg-gray-950 border border-white/10 rounded-3xl w-full max-w-5xl overflow-hidden max-h-[92vh] flex flex-col animate-slide-up shadow-2xl animate-fade-in">
+            
+            <button 
+              onClick={() => setSelectedProperty(null)}
+              className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/70 hover:bg-black text-white border border-white/10 transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X size={18} />
             </button>
 
-            <div className="relative h-64 md:h-96">
-              <Image
-                src={
-                  selectedProperty.images?.[currentImageIndex] ||
-                  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'
-                }
-                alt={selectedProperty.title}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-
-              {selectedProperty.images && selectedProperty.images.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      prevImage();
-                    }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur rounded-full p-2 hover:bg-white transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      nextImage();
-                    }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur rounded-full p-2 hover:bg-white transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </>
-              )}
-
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {selectedProperty.images?.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentImageIndex(index);
-                    }}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
-                    }`}
-                  />
-                ))}
+            {loadingDetail ? (
+              <div className="flex flex-col items-center justify-center h-[500px]">
+                <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin mb-4" />
+                <p className="text-gray-400 text-sm">Fetching detailed listing...</p>
               </div>
+            ) : (
+              <div className="overflow-y-auto flex-1">
+                
+                {/* Visual Viewport Header */}
+                <div className="relative h-64 md:h-[400px] w-full bg-black">
+                  
+                  {activeTab === "details" && (
+                    <>
+                      <img 
+                        src={selectedProperty.images?.[currentImageIdx] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"} 
+                        alt={selectedProperty.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {selectedProperty.images && selectedProperty.images.length > 1 && (
+                        <>
+                          <button 
+                            onClick={prevImage}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/60 hover:bg-black text-white border border-white/10 transition-colors"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <button 
+                            onClick={nextImage}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/60 hover:bg-black text-white border border-white/10 transition-colors"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                            {selectedProperty.images.map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setCurrentImageIdx(i)}
+                                className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentImageIdx ? "bg-primary w-4" : "bg-white/40"}`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
 
-              <div className="absolute top-4 left-4 flex gap-2">
-                {selectedProperty.moderationStatus && (
-                  <div
-                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${
-                      selectedProperty.moderationStatus === 'approved'
-                        ? 'bg-emerald-500 text-white'
-                        : selectedProperty.moderationStatus === 'rejected'
-                          ? 'bg-red-500 text-white'
-                          : 'bg-yellow-500 text-gray-900'
-                    }`}
-                  >
-                    {selectedProperty.moderationStatus === 'approved' && (
-                      <>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Approved
-                      </>
-                    )}
-                    {selectedProperty.moderationStatus === 'rejected' && (
-                      <>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Rejected
-                      </>
-                    )}
-                    {selectedProperty.moderationStatus === 'pending' && (
-                      <>
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                        Pending Review
-                      </>
-                    )}
+                  {activeTab === "360" && (
+                    <div className="absolute inset-0 overflow-hidden flex items-center justify-center bg-gray-900">
+                      <div 
+                        className="w-[200%] h-full bg-cover bg-center transition-all ease-out pointer-events-none"
+                        style={{
+                          backgroundImage: `url(${selectedProperty.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'})`,
+                          backgroundPosition: `${panX}% center`,
+                          filter: 'brightness(0.95)'
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                      <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                        <Compass size={14} />
+                        360 View Demo
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "map" && (
+                    <div className="absolute inset-0 w-full h-full">
+                      <iframe
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedProperty.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        className="filter invert hue-rotate-180 opacity-80"
+                      />
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-4 right-4 flex gap-2">
+                    <button onClick={() => setActiveTab("details")} className={`px-4 py-1.5 rounded-xl text-xs font-bold border ${activeTab === "details" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10"}`}>Gallery</button>
+                    <button onClick={() => setActiveTab("360")} className={`px-4 py-1.5 rounded-xl text-xs font-bold border ${activeTab === "360" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10"}`}>360 Tour</button>
+                    <button onClick={() => setActiveTab("map")} className={`px-4 py-1.5 rounded-xl text-xs font-bold border ${activeTab === "map" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10"}`}>Map View</button>
                   </div>
-                )}
-              </div>
-            </div>
 
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-white mb-2">{selectedProperty.title}</h2>
-              <p className="text-gray-400 flex items-center gap-1 mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                {selectedProperty.location}
-              </p>
+                </div>
 
-              {(selectedProperty.bedrooms || selectedProperty.bathrooms || selectedProperty.size) && (
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  {selectedProperty.bedrooms && (
-                    <div className="bg-gray-800/50 rounded-lg p-3 text-center border border-gray-700/50">
-                      <p className="text-emerald-400 font-semibold text-lg">{selectedProperty.bedrooms}</p>
-                      <p className="text-gray-400 text-xs">
-                        Bedroom{selectedProperty.bedrooms > 1 ? 's' : ''}
+                <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  <div className="lg:col-span-8 space-y-8">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full capitalize">{selectedProperty.type}</span>
+                        {selectedProperty.moderationStatus && (
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full capitalize ${
+                            selectedProperty.moderationStatus === "approved" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                          }`}>{selectedProperty.moderationStatus}</span>
+                        )}
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2">{selectedProperty.title}</h2>
+                      <p className="text-sm text-gray-400 flex items-center gap-1">
+                        <MapPin size={14} className="text-primary" />
+                        {selectedProperty.location}
                       </p>
                     </div>
-                  )}
-                  {selectedProperty.bathrooms && (
-                    <div className="bg-gray-800/50 rounded-lg p-3 text-center border border-gray-700/50">
-                      <p className="text-emerald-400 font-semibold text-lg">{selectedProperty.bathrooms}</p>
-                      <p className="text-gray-400 text-xs">
-                        Bathroom{selectedProperty.bathrooms > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  )}
-                  {selectedProperty.size && (
-                    <div className="bg-gray-800/50 rounded-lg p-3 text-center border border-gray-700/50">
-                      <p className="text-emerald-400 font-semibold text-lg">{selectedProperty.size}</p>
-                      <p className="text-gray-400 text-xs">Sq. Ft.</p>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4">
-                  <p className="text-sm text-emerald-400 font-medium mb-1">Monthly Rent</p>
-                  <p className="text-3xl font-bold text-emerald-400">
-                    Rs. {selectedProperty.price.toLocaleString()}
-                  </p>
-                </div>
-                {selectedProperty.advancePayment && (
-                  <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4">
-                    <p className="text-sm text-orange-400 font-medium mb-1">Advance Payment</p>
-                    <p className="text-3xl font-bold text-orange-400">
-                      Rs. {selectedProperty.advancePayment.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-orange-400/70 mt-1">
-                      ({(selectedProperty.advancePayment / selectedProperty.price).toFixed(1)} months advance)
-                    </p>
+                    <div className="grid grid-cols-3 gap-4 border-y border-white/5 py-5">
+                      {selectedProperty.bedrooms > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 font-medium">Bedrooms</p>
+                          <p className="text-lg font-bold text-white mt-1">{selectedProperty.bedrooms}</p>
+                        </div>
+                      )}
+                      {selectedProperty.bathrooms && selectedProperty.bathrooms > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 font-medium">Bathrooms</p>
+                          <p className="text-lg font-bold text-white mt-1">{selectedProperty.bathrooms}</p>
+                        </div>
+                      )}
+                      {selectedProperty.size && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 font-medium">Area Size</p>
+                          <p className="text-lg font-bold text-white mt-1">{selectedProperty.size} Sq.Ft</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 text-left">
+                      <h3 className="text-lg font-bold text-white">About the Property</h3>
+                      <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-line">{selectedProperty.description}</p>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="mb-6">
-                <h3 className="font-semibold text-white mb-2">Description</h3>
-                <p className="text-gray-400">{selectedProperty.description || 'No description available'}</p>
-              </div>
+                  <div className="lg:col-span-4 bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 shadow-xl text-left">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium">Monthly Rent</p>
+                      <h3 className="text-2xl font-extrabold text-primary mt-1">Rs. {selectedProperty.price.toLocaleString()}</h3>
+                    </div>
 
-              <div className="mb-6">
-                <h3 className="font-semibold text-white mb-3">Amenities</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProperty.amenities?.map((amenity) => (
-                    <span
-                      key={amenity}
-                      className="bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm flex items-center gap-2 border border-gray-700"
-                    >
-                      <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      {amenity}
-                    </span>
-                  ))}
+                    <div className="space-y-3">
+                      <Link
+                        href={`/my-listings/${selectedProperty.id}/edit`}
+                        className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all"
+                      >
+                        <Edit size={14} />
+                        Edit Property
+                      </Link>
+                      <button
+                        onClick={() => setDeleteConfirm(String(selectedProperty.id))}
+                        className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all"
+                      >
+                        <Trash2 size={14} />
+                        Delete Property
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
-              </div>
 
-              <div className="border-t border-gray-700 pt-6 flex gap-3">
-                <Link
-                  href={`/my-listings/${selectedProperty.id}/edit`}
-                  className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 px-4 py-3 rounded-lg font-medium transition-all duration-300 text-center"
-                >
-                  Edit Property
-                </Link>
-                <button
-                  onClick={() => {
-                    setDeleteConfirm(String(selectedProperty.id));
-                  }}
-                  className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg font-medium transition-all duration-300"
-                >
-                  Delete Property
-                </button>
-                <button
-                  onClick={closePropertyDetails}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-4 py-3 rounded-lg font-medium transition-all duration-300"
-                >
-                  Close
-                </button>
               </div>
-            </div>
+            )}
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
 
 function MyListingsLoading() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
-      <div className="relative py-12">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 -left-20 w-60 h-60 bg-teal-500/10 rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="h-10 bg-gray-700/50 rounded-lg w-64 mx-auto mb-4 animate-pulse"></div>
-          <div className="h-6 bg-gray-700/50 rounded-lg w-48 mx-auto animate-pulse"></div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
   );
 }
