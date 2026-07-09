@@ -52,20 +52,25 @@ export default function SignUpPage() {
     const group = new THREE.Group();
     scene.add(group);
 
+    const isLight = document.documentElement.classList.contains("light");
+    const matColor = isLight ? 0x059669 : 0x1f2937;
+    const matOpacity = isLight ? 0.15 : 0.8;
+    const lineColor = isLight ? 0x0f766e : 0x10b981;
+
     // Primitives
     const geometry = new THREE.BoxGeometry(1.2, 1.8, 1.2);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x1f2937,
+      color: matColor,
       roughness: 0.3,
       metalness: 0.8,
       transparent: true,
-      opacity: 0.8,
+      opacity: matOpacity,
     });
     const mainBuilding = new THREE.Mesh(geometry, material);
     group.add(mainBuilding);
 
     const edges = new THREE.EdgesGeometry(geometry);
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 });
+    const lineMaterial = new THREE.LineBasicMaterial({ color: lineColor, linewidth: 2 });
     const outline = new THREE.LineSegments(edges, lineMaterial);
     group.add(outline);
 
@@ -180,19 +185,19 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="relative min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-black pt-16">
+    <div className="relative min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-background pt-16">
       <MeshBackground />
 
       {/* Left side: 3D Animation View */}
       <div 
         ref={leftContainerRef}
-        className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center relative border-r border-white/5 bg-gradient-to-br from-black via-gray-950 to-black overflow-hidden"
+        className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center relative border-r border-auth-left-border bg-gradient-to-br from-auth-left-bg-from via-auth-left-bg-via to-auth-left-bg-to overflow-hidden"
       >
         <div className="text-center max-w-lg z-10 space-y-4 px-8 mb-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary leading-tight">
             Discover Verified Rental Spaces in Sri Lanka
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-text-muted text-sm leading-relaxed">
             Create an account to save properties, check availability, and contact hosts directly with zero agency commission.
           </p>
         </div>
@@ -209,10 +214,10 @@ export default function SignUpPage() {
               <div className="w-9 h-9 bg-gradient-to-tr from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                 <span className="text-white font-bold text-base">BL</span>
               </div>
-              <span className="text-xl font-bold text-white">Board<span className="text-primary">Lanka</span></span>
+              <span className="text-xl font-bold text-text-primary">Board<span className="text-primary">Lanka</span></span>
             </Link>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white">Create Account</h1>
-            <p className="text-xs text-gray-400">Join BoardLanka and find your ideal place</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary">Create Account</h1>
+            <p className="text-xs text-text-muted">Join BoardLanka and find your ideal place</p>
           </div>
 
           <div className="glass p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
@@ -230,28 +235,28 @@ export default function SignUpPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 
-                {/* Role Switcher */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-2">I am looking to</label>
+                {/* Role selection tabs */}
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs font-semibold text-text-muted">Account Type</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setRole("buyer")}
-                      className={`py-3 px-4 rounded-xl font-bold text-xs transition-all border ${
+                      className={`py-3 px-4 rounded-xl font-bold text-xs transition-all border cursor-pointer ${
                         role === "buyer"
                           ? "bg-primary text-white border-transparent shadow-md shadow-primary/20"
-                          : "bg-white/5 text-gray-400 border-white/5 hover:border-white/15"
+                          : "bg-card-bg text-text-muted border-card-border hover:bg-card-hover-bg"
                       }`}
                     >
-                      Find a Place
+                      Find Property
                     </button>
                     <button
                       type="button"
                       onClick={() => setRole("seller")}
-                      className={`py-3 px-4 rounded-xl font-bold text-xs transition-all border ${
+                      className={`py-3 px-4 rounded-xl font-bold text-xs transition-all border cursor-pointer ${
                         role === "seller"
                           ? "bg-primary text-white border-transparent shadow-md shadow-primary/20"
-                          : "bg-white/5 text-gray-400 border-white/5 hover:border-white/15"
+                          : "bg-card-bg text-text-muted border-card-border hover:bg-card-hover-bg"
                       }`}
                     >
                       List Property
@@ -261,7 +266,7 @@ export default function SignUpPage() {
 
                 {/* Full Name */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Full Name</label>
+                  <label className="text-xs font-semibold text-text-muted">Full Name</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -269,15 +274,15 @@ export default function SignUpPage() {
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="John Doe"
                       required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <User size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <User size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Email Address</label>
+                  <label className="text-xs font-semibold text-text-muted">Email Address</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -285,15 +290,15 @@ export default function SignUpPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="john@example.com"
                       required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <Mail size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <Mail size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Password</label>
+                  <label className="text-xs font-semibold text-text-muted">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -301,13 +306,13 @@ export default function SignUpPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Create a strong password"
                       required
-                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <Lock size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <Lock size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-gray-400 hover:text-white"
+                      className="absolute right-3.5 top-3.5 text-text-muted hover:text-text-primary"
                     >
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -316,7 +321,7 @@ export default function SignUpPage() {
 
                 {/* Confirm Password */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Confirm Password</label>
+                  <label className="text-xs font-semibold text-text-muted">Confirm Password</label>
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
@@ -324,13 +329,13 @@ export default function SignUpPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm your password"
                       required
-                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <Lock size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <Lock size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3.5 top-3.5 text-gray-400 hover:text-white"
+                      className="absolute right-3.5 top-3.5 text-text-muted hover:text-text-primary"
                     >
                       {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -344,9 +349,9 @@ export default function SignUpPage() {
                       type="checkbox"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="mt-0.5 rounded accent-primary border-white/10 bg-white/5 w-4 h-4"
+                      className="mt-0.5 rounded accent-primary border-card-border bg-card-bg w-4 h-4"
                     />
-                    <span className="text-[10px] text-gray-400 leading-normal text-left">
+                    <span className="text-[10px] text-text-muted leading-normal text-left">
                       I agree to the <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
                     </span>
                   </label>
@@ -355,9 +360,9 @@ export default function SignUpPage() {
                       type="checkbox"
                       checked={sendUpdates}
                       onChange={(e) => setSendUpdates(e.target.checked)}
-                      className="mt-0.5 rounded accent-primary border-white/10 bg-white/5 w-4 h-4"
+                      className="mt-0.5 rounded accent-primary border-card-border bg-card-bg w-4 h-4"
                     />
-                    <span className="text-[10px] text-gray-400 leading-normal text-left">
+                    <span className="text-[10px] text-text-muted leading-normal text-left">
                       Send me updates about new listings and promotional offers.
                     </span>
                   </label>
@@ -367,7 +372,7 @@ export default function SignUpPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 mt-4"
+                  className="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 mt-4 cursor-pointer"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -382,17 +387,17 @@ export default function SignUpPage() {
                 {/* Social logins */}
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/5"></div>
+                    <div className="w-full border-t border-card-border"></div>
                   </div>
                   <div className="relative flex justify-center text-[10px]">
-                    <span className="px-3 bg-gray-950 text-gray-500 font-semibold uppercase">Or continue with</span>
+                    <span className="px-3 bg-background text-text-muted font-semibold uppercase">Or continue with</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <button 
                     type="button" 
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-semibold text-gray-300"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-card-bg border border-card-border hover:bg-card-hover-bg transition-colors text-xs font-semibold text-text-primary cursor-pointer"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -404,7 +409,7 @@ export default function SignUpPage() {
                   </button>
                   <button 
                     type="button" 
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-semibold text-gray-300"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-card-bg border border-card-border hover:bg-card-hover-bg transition-colors text-xs font-semibold text-text-primary cursor-pointer"
                   >
                     <Github size={16} />
                     <span>GitHub</span>

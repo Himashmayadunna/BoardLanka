@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import SmoothScroll from "@/app/components/SmoothScroll";
+import CustomCursor from "@/app/components/CustomCursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,8 +21,6 @@ export const metadata: Metadata = {
   description: "Find and list rental property, land, anexxes and rooms across Sri Lanka. Connect with property owners and tenants easily.",
   icons: {
     icon: "/logo/logo.png",
-    shortcut: "/logo/logo.png",
-    apple: "/logo/logo.png",
   },
 };
 
@@ -37,6 +36,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SmoothScroll>
+          <CustomCursor />
           <Navbar />
           {children}
           <Footer />

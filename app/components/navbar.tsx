@@ -119,7 +119,7 @@ function NavbarContent() {
   return (
     <header 
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        isScrolled 
+        isScrolled || !isDarkMode
           ? "glass-nav py-3 shadow-lg shadow-black/10" 
           : "bg-transparent py-5"
       }`}
@@ -136,11 +136,10 @@ function NavbarContent() {
                 fill
                 sizes="40px"
                 className="object-cover"
-                priority
                 unoptimized
               />
             </div>
-            <span className="text-white font-bold text-xl tracking-tight hidden sm:block">
+            <span className="text-text-primary font-bold text-xl tracking-tight hidden sm:block">
               Board<span className="text-primary">Lanka</span>
             </span>
           </Link>
@@ -162,7 +161,7 @@ function NavbarContent() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive 
                       ? "text-primary bg-primary-glow" 
-                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                      : "text-text-muted hover:text-text-primary hover:bg-card-hover-bg"
                   }`}
                 >
                   {item.label}
@@ -186,14 +185,14 @@ function NavbarContent() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search locations..."
-                    className="w-48 px-3.5 py-1.5 rounded-lg text-xs bg-black/60 text-white placeholder-gray-400 border border-white/10 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary-glow transition-all"
+                    className="w-48 px-3.5 py-1.5 rounded-lg text-xs bg-card-bg text-text-primary placeholder-text-muted/60 border border-card-border focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary-glow transition-all"
                     autoFocus
                   />
                 </form>
               )}
               <button 
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
                 title="Search Properties"
               >
                 <Search size={18} />
@@ -204,18 +203,18 @@ function NavbarContent() {
             <div className="relative">
               <button 
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors relative"
+                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors relative"
                 title="Notifications"
               >
                 <Bell size={18} />
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
               </button>
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2.5 w-72 rounded-xl border border-white/10 bg-gray-900/95 backdrop-blur-xl p-4 shadow-xl text-left animate-slide-up">
-                  <h4 className="font-semibold text-white text-sm border-b border-white/5 pb-2 mb-2">Notifications</h4>
-                  <div className="space-y-2 text-xs text-gray-400">
-                    <div className="p-2 rounded hover:bg-white/5 cursor-pointer">
-                      <p className="text-white font-medium">Welcome to BoardLanka!</p>
+                <div className="absolute right-0 mt-2.5 w-72 rounded-xl border border-glass-border bg-glass-bg backdrop-blur-xl p-4 shadow-xl text-left animate-slide-up">
+                  <h4 className="font-semibold text-text-primary text-sm border-b border-glass-border pb-2 mb-2">Notifications</h4>
+                  <div className="space-y-2 text-xs text-text-muted">
+                    <div className="p-2 rounded hover:bg-card-hover-bg cursor-pointer">
+                      <p className="text-text-primary font-medium">Welcome to BoardLanka!</p>
                       <p className="mt-0.5">Start exploring premium rooms and houses.</p>
                     </div>
                   </div>
@@ -226,14 +225,14 @@ function NavbarContent() {
             {/* Dark Mode Toggle */}
             <button 
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
             {/* Vertical Divider */}
-            <span className="h-5 w-px bg-white/10 hidden md:block" />
+            <span className="h-5 w-px bg-card-border hidden md:block" />
 
             {/* Become a Host & User Profile Actions */}
             <div className="hidden md:flex items-center space-x-2">
@@ -250,14 +249,14 @@ function NavbarContent() {
                   ) : (
                     <Link
                       href="/profile/edit"
-                      className="text-gray-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                      className="text-text-muted hover:text-text-primary hover:bg-card-hover-bg px-3 py-2 rounded-xl text-xs font-semibold transition-all"
                     >
                       Become a Host
                     </Link>
                   )}
                   <Link 
                     href="/profile"
-                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3.5 py-1.5 rounded-xl border border-white/5 text-xs font-semibold text-white transition-all"
+                    className="flex items-center gap-2 bg-card-bg hover:bg-card-hover-bg px-3.5 py-1.5 rounded-xl border border-card-border text-xs font-semibold text-text-primary transition-all"
                   >
                     <div className="w-6 h-6 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center text-[10px] font-bold text-white uppercase">
                       {user?.firstName?.charAt(0) || "U"}
@@ -269,13 +268,13 @@ function NavbarContent() {
                 <>
                   <Link
                     href="/signup"
-                    className="text-gray-300 hover:text-white hover:bg-white/5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                    className="text-text-muted hover:text-text-primary hover:bg-card-hover-bg px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
                   >
                     Become a Host
                   </Link>
                   <Link
                     href="/signin"
-                    className="bg-white text-black hover:bg-white/90 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-md shadow-white/5"
+                    className="bg-text-primary text-background hover:opacity-90 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-md shadow-card-border"
                   >
                     Sign In
                   </Link>
@@ -286,7 +285,7 @@ function NavbarContent() {
             {/* Mobile Menu Icon Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -297,13 +296,13 @@ function NavbarContent() {
 
       {/* Mobile Glass Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-y-0 right-0 w-80 bg-gray-950/95 backdrop-blur-2xl border-l border-white/10 p-6 z-50 animate-slide-left shadow-2xl flex flex-col justify-between">
+        <div className="lg:hidden fixed inset-y-0 right-0 w-80 bg-glass-bg backdrop-blur-2xl border-l border-glass-border p-6 z-50 animate-slide-left shadow-2xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-              <span className="text-white font-bold text-lg">Board<span className="text-primary">Lanka</span></span>
+            <div className="flex items-center justify-between border-b border-glass-border pb-4 mb-6">
+              <span className="text-text-primary font-bold text-lg">Board<span className="text-primary">Lanka</span></span>
               <button 
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5"
+                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg"
               >
                 <X size={20} />
               </button>
@@ -316,7 +315,7 @@ function NavbarContent() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-all"
                 >
                   {item.label}
                 </Link>
@@ -325,27 +324,27 @@ function NavbarContent() {
           </div>
 
           {/* Mobile Auth Bottom Section */}
-          <div className="border-t border-white/10 pt-6 space-y-3">
+          <div className="border-t border-glass-border pt-6 space-y-3">
             {isLoggedIn ? (
               <>
                 <Link
                   href="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-all"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary font-medium transition-all"
                 >
                   <div className="w-8 h-8 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center text-xs font-bold text-white uppercase">
                     {user?.firstName?.charAt(0) || "U"}
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold">{user?.firstName} {user?.lastName}</p>
-                    <p className="text-[10px] text-gray-500 capitalize">{user?.accountType || "User"}</p>
+                    <p className="text-[10px] text-text-muted capitalize">{user?.accountType || "User"}</p>
                   </div>
                 </Link>
                 {user?.accountType === "seller" && (
                   <Link
                     href="/addproperty"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-white font-semibold transition-all"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-white font-semibold transition-all hover:bg-primary-hover"
                   >
                     <PlusCircle size={16} />
                     Add Property
@@ -353,7 +352,7 @@ function NavbarContent() {
                 )}
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white font-semibold transition-all border border-red-500/25"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white font-semibold transition-all border border-red-500/25"
                 >
                   <LogOut size={16} />
                   Sign Out
@@ -364,14 +363,14 @@ function NavbarContent() {
                 <Link
                   href="/signup"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full py-3 rounded-xl bg-white/5 text-white font-semibold transition-all border border-white/10"
+                  className="flex items-center justify-center w-full py-3 rounded-xl bg-card-bg text-text-primary font-semibold transition-all border border-card-border"
                 >
                   Become a Host
                 </Link>
                 <Link
                   href="/signin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full py-3 rounded-xl bg-primary text-white font-semibold transition-all"
+                  className="flex items-center justify-center w-full py-3 rounded-xl bg-primary text-white font-semibold transition-all hover:bg-primary-hover"
                 >
                   Sign In
                 </Link>

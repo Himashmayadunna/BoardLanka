@@ -173,7 +173,7 @@ export default function Home() {
       <MeshBackground />
 
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 md:py-24 lg:py-32">
+      <section className="dark relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 md:py-24 lg:py-32">
         {/* Full covered 3D background image with movement */}
         <motion.div 
           className="absolute inset-0 z-0 overflow-hidden"
@@ -220,7 +220,7 @@ export default function Home() {
 
               <motion.h1 
                 variants={fadeInUp} 
-                className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.15]"
+                className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.15] keep-white"
               >
                 Find Your Perfect <br />
                 <span className="bg-gradient-to-r from-primary via-teal-400 to-secondary bg-clip-text text-transparent animate-pulse">
@@ -230,7 +230,7 @@ export default function Home() {
 
               <motion.p 
                 variants={fadeInUp} 
-                className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed"
+                className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed keep-white"
               >
                 Helping university students, working professionals and modern families discover verified boarding places and luxury homes across Sri Lanka.
               </motion.p>
@@ -248,7 +248,7 @@ export default function Home() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Enter city or university (e.g. Homagama)..."
-                    className="w-full bg-transparent border-0 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-0 py-2"
+                    className="w-full bg-transparent border-0 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-0 py-2 keep-white"
                   />
                 </div>
                 <button
@@ -308,8 +308,8 @@ export default function Home() {
               >
                 <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1.5 group-hover:text-primary transition-colors">{cat.title}</h3>
-                  <p className="text-xs text-gray-500">{cat.desc}</p>
+                  <h3 className="text-lg font-bold text-text-primary mb-1.5 group-hover:text-primary transition-colors">{cat.title}</h3>
+                  <p className="text-xs text-text-muted">{cat.desc}</p>
                 </div>
               </Link>
             ))}
@@ -356,7 +356,7 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-8">
               {featured.map((item) => (
                 <Link
-                  href={`/property-land?id=${item.id}`}
+                  href={item.type === "annex" || item.type === "room" ? `/anexxes-rooms?id=${item.id}` : `/property-land?id=${item.id}`}
                   key={item.id}
                   className="glass-card rounded-3xl overflow-hidden group flex flex-col justify-between h-[430px]"
                 >
@@ -380,23 +380,23 @@ export default function Home() {
                   </div>
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                      <h3 className="font-bold text-lg text-text-primary mb-2 line-clamp-1 group-hover:text-primary transition-colors">
                         {item.title}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-                        <MapPin size={12} className="text-gray-500" />
+                      <div className="flex items-center gap-1.5 text-xs text-text-muted mb-4">
+                        <MapPin size={12} className="text-text-muted/70" />
                         <span>{item.location}</span>
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div className="flex items-center justify-between border-t border-card-border pt-4">
                       <div>
                         <span className="text-xl font-bold bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent">
                           Rs. {item.price.toLocaleString()}
                         </span>
-                        <span className="text-[10px] text-gray-500"> /month</span>
+                        <span className="text-[10px] text-text-muted"> /month</span>
                       </div>
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/5 text-white group-hover:bg-primary group-hover:text-white transition-colors">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-card-bg text-text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                         <ArrowRight size={14} />
                       </span>
                     </div>
@@ -430,7 +430,7 @@ export default function Home() {
               <Link
                 key={city.name}
                 href={`/property-land?location=${city.search}`}
-                className="group relative h-48 rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-end p-4 shadow-lg hover:border-primary/50 transition-all duration-300"
+                className="dark group relative h-48 rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-end p-4 shadow-lg hover:border-primary/50 transition-all duration-300"
               >
                 {/* Background Image with Overlay */}
                 <Image
@@ -544,14 +544,14 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 mt-8">
             <button 
               onClick={prevTestimonial}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+              className="p-2 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary border border-card-border transition-all"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-xs text-gray-600 font-semibold">{testimonialIdx + 1} / {testimonials.length}</span>
+            <span className="text-xs text-text-muted font-semibold">{testimonialIdx + 1} / {testimonials.length}</span>
             <button 
               onClick={nextTestimonial}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+              className="p-2 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary border border-card-border transition-all"
             >
               <ChevronRight size={16} />
             </button>

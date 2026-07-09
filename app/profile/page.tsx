@@ -32,6 +32,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UserData {
   id: string;
@@ -384,6 +385,13 @@ export default function ProfilePage() {
     }
   };
 
+  const getPropertyLink = (item: Property) => {
+    if (item.type === "annex" || item.type === "room") {
+      return `/anexxes-rooms?id=${item.id}`;
+    }
+    return `/property-land?id=${item.id}`;
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -455,469 +463,563 @@ export default function ProfilePage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Cover Canvas Banner */}
-        <div className="h-48 rounded-t-3xl bg-gradient-to-r from-primary/30 via-teal-500/20 to-secondary/30 border-t border-x border-white/10 relative overflow-hidden flex items-end p-6 shadow-inner">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] pointer-events-none" />
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[10px] font-bold text-primary relative z-10 select-none">
-            <LayoutDashboard size={12} />
-            <span>Dashboard Workspace</span>
-          </div>
-        </div>
-
-        {/* Header Metadata Section */}
-        <div className="bg-gray-950/80 backdrop-blur-2xl border-x border-b border-white/10 rounded-b-3xl p-6 relative shadow-2xl">
+        {/* Two-Column Grid Workspace */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-20 pb-8">
           
-          {/* Avatar Position */}
-          <div className="absolute -top-12 left-6">
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-primary to-secondary p-1 shadow-xl shadow-black/20">
-              <div className="w-full h-full bg-gray-950 rounded-[20px] flex items-center justify-center">
-                <span className="text-3xl font-extrabold bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent uppercase">
-                  {user.firstName.charAt(0)}{user.lastName?.charAt(0) || ""}
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* LEFT COLUMN: Profile card, verified details */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="glass border border-white/10 rounded-[2.5rem] p-6 text-left shadow-2xl relative overflow-hidden space-y-6 bg-gray-950/75 backdrop-blur-2xl">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+              
+              {/* Profile Logo Avatar */}
+              <div className="flex flex-col items-center text-center space-y-4 pt-4">
+                <div className="relative group">
+                  {/* Glowing Double Ring border */}
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-teal-400 rounded-full blur opacity-40 group-hover:opacity-75 transition-opacity duration-300 animate-pulse" />
+                  <div className="relative w-28 h-28 rounded-full bg-gradient-to-tr from-primary to-teal-400 p-[3px] shadow-xl">
+                    <div className="w-full h-full bg-[#08090a] rounded-full flex items-center justify-center border border-white/5">
+                      <span className="text-4xl font-black bg-gradient-to-r from-primary to-teal-300 bg-clip-text text-transparent uppercase tracking-wider">
+                        {user.firstName.charAt(0)}{user.lastName?.charAt(0) || ""}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Status verified online dot indicator */}
+                  <div className="absolute bottom-1 right-2 w-5 h-5 rounded-full bg-emerald-500 border-4 border-gray-950 shadow-md flex items-center justify-center" title="Online & verified profile">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                  </div>
+                </div>
 
-          <div className="pt-14 sm:pt-0 sm:pl-28 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="text-left">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-extrabold text-white">
-                  {user.firstName} {user.lastName}
-                </h1>
-                <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                  user.accountType === "seller" 
-                    ? "bg-purple-500/10 text-purple-400 border-purple-500/25" 
-                    : "bg-blue-500/10 text-blue-400 border-blue-500/25"
-                }`}>
-                  {user.accountType === "seller" ? "Host / Owner" : "Room Seeker"}
-                </span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1 max-w-lg leading-relaxed italic">
-                {user.bio || "No biography added yet. Click 'Edit Profile' to add yours."}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Link
-                href="/profile/edit"
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-primary-glow text-primary hover:bg-primary hover:text-white rounded-xl border border-primary/20 text-xs font-semibold transition-all"
-              >
-                <Edit size={14} />
-                Edit Profile
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 text-xs font-semibold transition-all"
-              >
-                <LogOut size={14} />
-                Sign Out
-              </button>
-            </div>
-          </div>
+                <div className="space-y-1.5">
+                  <h2 className="text-2xl font-black text-white leading-tight tracking-tight">
+                    {user.firstName} {user.lastName}
+                  </h2>
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-3 py-1 rounded-full border uppercase tracking-wider ${
+                    user.accountType === "seller" 
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-md shadow-purple-500/5" 
+                      : "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-md shadow-blue-500/5"
+                  }`}>
+                    {user.accountType === "seller" ? "Host / Owner" : "Room Seeker"}
+                  </span>
+                </div>
 
-        </div>
-
-        {/* Tabbed Navigation Bar */}
-        <div className="flex gap-2 p-1.5 mt-8 bg-white/5 border border-white/10 rounded-2xl max-w-fit">
-          <button
-            onClick={() => setActiveTab("workspace")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "workspace" ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <LayoutDashboard size={14} />
-            Workspace
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("favorites")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "favorites" ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Heart size={14} />
-            My Favorites ({favoritesList.length})
-          </button>
-
-          {user.accountType === "seller" && (
-            <button
-              onClick={() => setActiveTab("listings")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeTab === "listings" ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Building size={14} />
-              Hosted Properties
-            </button>
-          )}
-
-          <button
-            onClick={() => setActiveTab("problems")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "problems" ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <ShieldAlert size={14} />
-            Reported Issues ({problemsList.length})
-          </button>
-        </div>
-
-        {/* TAB CONTENTS */}
-        
-        {/* Workspace Dashboard Tab */}
-        {activeTab === "workspace" && (
-          <div className="mt-8 space-y-6">
-            {/* Stats Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="glass p-5 rounded-2xl border border-white/10 text-left space-y-2 shadow-lg">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Verification Scope</span>
-                <p className="text-lg font-bold text-white flex items-center gap-1.5">
-                  <ShieldCheck size={18} className="text-emerald-400" />
-                  Active verified profile
+                <p className="text-xs text-gray-400 leading-relaxed max-w-xs italic bg-white/3 p-4.5 rounded-2xl border border-white/5">
+                  {user.bio || "No biography added yet. Click 'Edit Profile' to add details about yourself."}
                 </p>
-                <p className="text-[10px] text-gray-400">Registered: {formatDate(user.createdAt)}</p>
               </div>
 
-              <div className="glass p-5 rounded-2xl border border-white/10 text-left space-y-2 shadow-lg">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Saved Boardings</span>
-                <p className="text-2xl font-black text-primary">{favoritesList.length}</p>
-                <p className="text-[10px] text-gray-400">Items favorited across BoardLanka</p>
-              </div>
+              {/* Core Credentials & Details */}
+              <div className="border-t border-white/5 pt-5 space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Account Info</h3>
+                
+                <div className="space-y-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/5 text-primary border border-white/5 flex items-center justify-center">
+                      <Mail size={14} />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider leading-none">Email Address</p>
+                      <p className="text-xs font-semibold text-white mt-1 truncate">{user.email}</p>
+                    </div>
+                  </div>
 
-              <div className="glass p-5 rounded-2xl border border-white/10 text-left space-y-2 shadow-lg">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Active Problem Reports</span>
-                <p className="text-2xl font-black text-red-400">
-                  {problemsList.filter(p => p.status !== "resolved" && p.status !== "closed").length}
-                </p>
-                <p className="text-[10px] text-gray-400">Open or In-Progress problem tickets</p>
-              </div>
-            </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/5 text-primary border border-white/5 flex items-center justify-center">
+                      <Phone size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider leading-none">Phone Number</p>
+                      <p className="text-xs font-semibold text-white mt-1">{user.phone || "Not specified"}</p>
+                    </div>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Account details panel */}
-              <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 md:col-span-2 shadow-xl">
-                <h3 className="font-bold text-white flex items-center gap-2 pb-3 border-b border-white/5">
-                  <User size={16} className="text-primary" /> Profile details
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-gray-500 font-medium">Email Address</span>
-                    <p className="text-white font-semibold mt-1">{user.email}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/5 text-primary border border-white/5 flex items-center justify-center">
+                      <Calendar size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider leading-none">Member Since</p>
+                      <p className="text-xs font-semibold text-white mt-1">{formatDate(user.createdAt)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Phone Number</span>
-                    <p className="text-white font-semibold mt-1">{user.phone || "Not specified"}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Account Authority</span>
-                    <p className="text-white font-semibold mt-1 capitalize">{user.accountType === "seller" ? "Property Landlord" : "Property Buyer / Renter"}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Alert Notifications</span>
-                    <p className="text-white font-semibold mt-1">{user.marketingUpdates ? "Subscribed to alerts" : "Muted"}</p>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/5 text-primary border border-white/5 flex items-center justify-center">
+                      <ShieldCheck size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider leading-none">Alert Subscription</p>
+                      <p className="text-xs font-semibold text-white mt-1">
+                        {user.marketingUpdates ? "Alert notifications enabled" : "Muted"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-6">
-                {/* Quick Actions Panel */}
-                <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 shadow-xl">
-                  <h3 className="font-bold text-white flex items-center gap-2 pb-3 border-b border-white/5">
-                    <Settings size={16} className="text-primary" /> Shortcut Actions
-                  </h3>
-                  <div className="flex flex-col gap-2.5">
-                    <Link
-                      href="/property-land"
-                      className="flex items-center justify-between p-3 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/20 rounded-xl transition-all text-xs font-semibold text-white"
-                    >
-                      <span>Browse Houses / Land</span>
-                      <Search size={14} className="text-primary" />
-                    </Link>
-                    <Link
-                      href="/anexxes-rooms"
-                      className="flex items-center justify-between p-3 bg-white/5 hover:bg-primary-glow border border-white/5 hover:border-primary/20 rounded-xl transition-all text-xs font-semibold text-white"
-                    >
-                      <span>Browse Annexes</span>
-                      <Building size={14} className="text-primary" />
-                    </Link>
-                    {user.accountType === "seller" && (
-                      <Link
-                        href="/addproperty"
-                        className="flex items-center justify-between p-3 bg-primary text-white hover:bg-primary-hover rounded-xl transition-all text-xs font-bold"
-                      >
-                        <span>Add New Property Listing</span>
-                        <PlusCircle size={14} />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {/* System Testing & Demo Data Panel */}
-                <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 shadow-xl">
-                  <h3 className="font-bold text-white flex items-center gap-2 pb-3 border-b border-white/5">
-                    <ShieldAlert size={16} className="text-red-400" /> Demo Sandbox
-                  </h3>
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Instantly generate dummy properties and problem reports to inspect the system flow. Clean them up easily when done.
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <button
-                      onClick={handleSeedData}
-                      disabled={isSeeding}
-                      className="px-3 py-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      {isSeeding ? "Seeding..." : "Seed Data"}
-                    </button>
-                    <button
-                      onClick={handleClearData}
-                      disabled={isClearing}
-                      className="px-3 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      {isClearing ? "Clearing..." : "Clear Data"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Favorites Tab Content */}
-        {activeTab === "favorites" && (
-          <div className="mt-8 text-left">
-            <h3 className="text-lg font-bold text-white mb-4">Saved Properties</h3>
-            
-            {loadingFavorites ? (
-              <div className="flex justify-center py-10">
-                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-              </div>
-            ) : favoritesList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {favoritesList.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => router.push(`/property-land?id=${item.id}`)}
-                    className="glass-card rounded-2xl overflow-hidden cursor-pointer h-[320px] flex flex-col justify-between"
-                  >
-                    <div className="relative h-40 w-full bg-white/5">
-                      <Image
-                        src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                      <div className="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[10px] text-white uppercase font-bold">
-                        {item.type}
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-white text-sm line-clamp-1">{item.title}</h4>
-                        <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                          <MapPin size={10} className="text-primary" /> {item.location}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                        <span className="font-bold text-sm text-primary">Rs. {item.price.toLocaleString()}</span>
-                        <span className="text-[10px] text-gray-500">View Details →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
-                <Heart size={32} className="mx-auto text-gray-600 mb-2" />
-                <p className="text-xs text-gray-400">No properties saved to favorites yet.</p>
-                <Link href="/property-land" className="text-primary hover:underline text-xs font-semibold mt-2 inline-block">
-                  Explore listings
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Landlord Hosted listings Tab Content */}
-        {activeTab === "listings" && user.accountType === "seller" && (
-          <div className="mt-8 text-left">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white">Your Property Listings</h3>
-              <Link
-                href="/addproperty"
-                className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-xl text-xs font-bold transition-all"
-              >
-                <Plus size={14} /> Add Listing
-              </Link>
-            </div>
-
-            {loadingListings ? (
-              <div className="flex justify-center py-10">
-                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-              </div>
-            ) : ownListings.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {ownListings.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => router.push(`/property-land?id=${item.id}`)}
-                    className="glass-card rounded-2xl overflow-hidden cursor-pointer h-[320px] flex flex-col justify-between"
-                  >
-                    <div className="relative h-40 w-full bg-white/5">
-                      <Image
-                        src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                      <div className="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[10px] text-white uppercase font-bold">
-                        {item.type}
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-white text-sm line-clamp-1">{item.title}</h4>
-                        <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                          <MapPin size={10} className="text-primary" /> {item.location}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                        <span className="font-bold text-sm text-primary">Rs. {item.price.toLocaleString()}</span>
-                        <span className="text-[10px] text-gray-500">Edit / Details →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
-                <Building size={32} className="mx-auto text-gray-600 mb-2" />
-                <p className="text-xs text-gray-400">You haven't listed any properties yet.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Problems & Reports Tab Content */}
-        {activeTab === "problems" && (
-          <div className="mt-8 text-left space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-              <div>
-                <h3 className="text-lg font-bold text-white">Reported Issues & Problem Tickets</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {user.accountType === "seller" 
-                    ? "Manage complaints and maintenance requests filed by tenants on your boardings."
-                    : "Track issues you reported about boarding properties, landlords, or general website glitches."}
-                </p>
-              </div>
-
-              {user.accountType !== "seller" && (
-                <button
-                  onClick={() => setShowGeneralReportModal(true)}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 text-xs font-bold transition-all self-start sm:self-center"
+              {/* Card Actions */}
+              <div className="border-t border-white/5 pt-5 flex gap-2">
+                <Link
+                  href="/profile/edit"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-primary-glow text-primary hover:bg-primary hover:text-white rounded-xl border border-primary/20 text-xs font-bold transition-all hover:scale-[1.02] active:scale-98"
                 >
-                  <ShieldAlert size={14} />
-                  Report Web Issue
+                  <Edit size={14} />
+                  Edit Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 text-xs font-bold transition-all hover:scale-[1.02] active:scale-98 cursor-pointer"
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Tab switcher and workspaces */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Tabbed Navigation Bar */}
+            <div className="flex flex-wrap gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl w-full">
+              <button
+                onClick={() => setActiveTab("workspace")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "workspace" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <LayoutDashboard size={14} />
+                Overview
+              </button>
+              
+              <button
+                onClick={() => setActiveTab("favorites")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "favorites" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Heart size={14} />
+                Favorites ({favoritesList.length})
+              </button>
+
+              {user.accountType === "seller" && (
+                <button
+                  onClick={() => setActiveTab("listings")}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeTab === "listings" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Building size={14} />
+                  Listings
                 </button>
               )}
+
+              <button
+                onClick={() => setActiveTab("problems")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "problems" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <ShieldAlert size={14} />
+                Issues ({problemsList.length})
+              </button>
             </div>
 
-            {loadingProblems ? (
-              <div className="flex justify-center py-10">
-                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-              </div>
-            ) : problemsList.length > 0 ? (
-              <div className="space-y-4">
-                {problemsList.map((prob) => (
-                  <div key={prob.id} className="glass p-5 rounded-2xl border border-white/10 shadow-lg space-y-4 text-left">
-                    {/* Header info */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-bold text-primary px-2 py-0.5 bg-primary-glow rounded-md uppercase tracking-wider">
-                          {prob.issue_type}
-                        </span>
-                        <h4 className="font-bold text-white text-sm">{prob.title}</h4>
-                        {prob.property_title && (
-                          <p className="text-[10px] text-gray-400">
-                            Property: <strong className="text-white">{prob.property_title}</strong>
-                          </p>
+            {/* TAB CONTENTS WITH ANIMATIONS */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
+              >
+                {activeTab === "workspace" && (
+                  <div className="space-y-6">
+                    {/* Stats Metrics Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      
+                      <div className="glass p-5 rounded-3xl border border-white/10 text-left space-y-2 relative overflow-hidden bg-gray-950/40">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Verification Scope</span>
+                        <p className="text-sm font-bold text-white flex items-center gap-1.5 mt-1">
+                          <ShieldCheck size={16} className="text-emerald-400" />
+                          Profile Active
+                        </p>
+                        <p className="text-[10px] text-gray-400 leading-none">Verified & Secured</p>
+                      </div>
+
+                      <div className="glass p-5 rounded-3xl border border-white/10 text-left space-y-1 relative overflow-hidden bg-gray-950/40">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Favorites</span>
+                        <p className="text-3xl font-black text-primary leading-tight">{favoritesList.length}</p>
+                        <p className="text-[10px] text-gray-400 leading-none">Boardings bookmarked</p>
+                      </div>
+
+                      <div className="glass p-5 rounded-3xl border border-white/10 text-left space-y-1 relative overflow-hidden bg-gray-950/40">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-red-500/5 rounded-full blur-2xl pointer-events-none" />
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Active Problems</span>
+                        <p className="text-3xl font-black text-red-400 leading-tight">
+                          {problemsList.filter(p => p.status !== "resolved" && p.status !== "closed").length}
+                        </p>
+                        <p className="text-[10px] text-gray-400 leading-none">Open complaints</p>
+                      </div>
+
+                    </div>
+
+                    {/* Quick Shortcuts Dashboard section */}
+                    <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 bg-gray-950/40">
+                      <h3 className="font-bold text-sm text-white flex items-center gap-2 pb-3 border-b border-white/5 uppercase tracking-wider text-gray-400">
+                        <Settings size={14} className="text-primary" /> Workspace Shortcuts
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <Link
+                          href="/property-land"
+                          className="flex flex-col justify-between p-4 bg-white/3 hover:bg-primary-glow border border-white/5 hover:border-primary/20 rounded-2xl transition-all group space-y-3"
+                        >
+                          <div className="p-2 w-8 h-8 rounded-xl bg-white/5 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Search size={16} />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white block">Browse Houses & Lands</span>
+                            <span className="text-[9px] text-gray-500 mt-1 block">Find large residential properties</span>
+                          </div>
+                        </Link>
+
+                        <Link
+                          href="/anexxes-rooms"
+                          className="flex flex-col justify-between p-4 bg-white/3 hover:bg-primary-glow border border-white/5 hover:border-primary/20 rounded-2xl transition-all group space-y-3"
+                        >
+                          <div className="p-2 w-8 h-8 rounded-xl bg-white/5 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Building size={16} />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white block">Browse Annexes & Rooms</span>
+                            <span className="text-[9px] text-gray-500 mt-1 block">Find rooms or rental annexes</span>
+                          </div>
+                        </Link>
+
+                        {user.accountType === "seller" ? (
+                          <Link
+                            href="/addproperty"
+                            className="flex flex-col justify-between p-4 bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 rounded-2xl transition-all group space-y-3"
+                          >
+                            <div className="p-2 w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <PlusCircle size={16} />
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold block">List a New Property</span>
+                              <span className="text-[9px] mt-1 block opacity-80">Add boarding rooms, houses, etc</span>
+                            </div>
+                          </Link>
+                        ) : (
+                          <div
+                            onClick={() => setShowGeneralReportModal(true)}
+                            className="flex flex-col justify-between p-4 bg-red-500/5 hover:bg-red-500 hover:text-white border border-red-500/10 hover:border-red-500/35 rounded-2xl transition-all group space-y-3 cursor-pointer"
+                          >
+                            <div className="p-2 w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <ShieldAlert size={16} />
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold block text-white group-hover:text-white">Report Website Bug</span>
+                              <span className="text-[9px] text-gray-500 group-hover:text-white/80 mt-1 block">Help us improve the system</span>
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-gray-500 font-medium">
-                          Filed: {formatDate(prob.created_at)}
-                        </span>
-                        {getStatusBadge(prob.status)}
+                    </div>
+
+                    {/* Developer Seeding Actions */}
+                    <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 bg-gray-950/40">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                          <h3 className="font-bold text-sm text-white flex items-center gap-2 pb-1">
+                            <TrendingUp size={14} className="text-primary" /> Demo Workspace Utility
+                          </h3>
+                          <p className="text-[10px] text-gray-500">Seed dummy data templates to verify favorites lists and maintenance ticket workflows.</p>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSeedData}
+                            disabled={isSeeding}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 border border-primary/25 hover:bg-primary text-primary hover:text-white text-[10px] font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {isSeeding ? <RefreshCw size={10} className="animate-spin" /> : <Plus size={10} />}
+                            Seed Mock Data
+                          </button>
+                          <button
+                            onClick={handleClearData}
+                            disabled={isClearing}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-500/5 border border-red-500/25 hover:bg-red-500 text-red-400 hover:text-white text-[10px] font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {isClearing ? <RefreshCw size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                            Clear Mock Data
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Body description */}
-                    <div className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
-                      {prob.description}
-                    </div>
+                  </div>
+                )}
 
-                    {/* Landlord information or Tenant contact information (if host) */}
-                    {user.accountType === "seller" && prob.profiles && (
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2 text-[11px]">
-                        <p className="font-bold text-white uppercase text-[9px] tracking-wider text-gray-400">Renter Contact details</p>
-                        <div className="flex flex-wrap gap-4 text-gray-300">
-                          <span className="flex items-center gap-1.5"><User size={12} className="text-primary" /> {prob.profiles.first_name} {prob.profiles.last_name}</span>
-                          <span className="flex items-center gap-1.5"><Mail size={12} className="text-primary" /> {prob.profiles.email}</span>
-                          {prob.profiles.phone && (
-                            <span className="flex items-center gap-1.5"><Phone size={12} className="text-primary" /> {prob.profiles.phone}</span>
-                          )}
+                {activeTab === "favorites" && (
+                  <div className="space-y-4 text-left">
+                    <h3 className="text-lg font-bold text-white">Saved Properties</h3>
+                    
+                    {loadingFavorites ? (
+                      <div className="flex justify-center py-12">
+                        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    ) : favoritesList.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {favoritesList.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => router.push(getPropertyLink(item))}
+                            className="glass-card rounded-[2rem] overflow-hidden cursor-pointer flex flex-col justify-between border border-white/5 bg-gray-950/40 hover:border-primary/30 transition-all hover:scale-[1.01] group"
+                          >
+                            <div className="relative h-44 w-full bg-white/5 overflow-hidden">
+                              <Image
+                                src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
+                                alt={item.title}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                unoptimized
+                              />
+                              <div className="absolute top-3 right-3 bg-black/75 backdrop-blur px-2.5 py-1 rounded-lg text-[9px] text-white uppercase font-bold tracking-wider border border-white/10">
+                                {item.type}
+                              </div>
+                            </div>
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                              <div className="space-y-1">
+                                <h4 className="font-extrabold text-white text-base line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
+                                <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                  <MapPin size={12} className="text-primary" /> {item.location}
+                                </p>
+                              </div>
+                              <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                <span className="font-black text-base text-primary">Rs. {item.price.toLocaleString()}</span>
+                                <span className="text-[10px] text-primary font-bold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                                  View Space →
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
+                          <Heart size={20} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">No favorited boardings yet.</p>
+                          <Link href="/property-land" className="text-primary hover:underline text-xs font-extrabold mt-2 inline-block">
+                            Start exploring boardings & rooms
+                          </Link>
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {/* Actions footer */}
-                    <div className="flex justify-end gap-2 pt-2 border-t border-white/5 text-xs">
-                      {/* Host Actions */}
-                      {user.accountType === "seller" && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-500 font-semibold">Change status:</span>
-                          
-                          <button
-                            disabled={updatingProblemId === prob.id || prob.status === "in-progress"}
-                            onClick={() => handleStatusChange(prob.id, "in-progress")}
-                            className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white rounded-lg font-bold text-[10px] transition-all disabled:opacity-50"
+                {activeTab === "listings" && user.accountType === "seller" && (
+                  <div className="space-y-4 text-left">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-white">Your Listed Spaces</h3>
+                      <Link
+                        href="/addproperty"
+                        className="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/10 border border-primary/20"
+                      >
+                        <Plus size={14} /> Add Listing
+                      </Link>
+                    </div>
+
+                    {loadingListings ? (
+                      <div className="flex justify-center py-12">
+                        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    ) : ownListings.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {ownListings.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => router.push(getPropertyLink(item))}
+                            className="glass-card rounded-[2rem] overflow-hidden cursor-pointer flex flex-col justify-between border border-white/5 bg-gray-950/40 hover:border-primary/30 transition-all hover:scale-[1.01] group"
                           >
-                            In Progress
-                          </button>
-                          
-                          <button
-                            disabled={updatingProblemId === prob.id || prob.status === "resolved"}
-                            onClick={() => handleStatusChange(prob.id, "resolved")}
-                            className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded-lg font-bold text-[10px] transition-all disabled:opacity-50"
-                          >
-                            Resolved
-                          </button>
+                            <div className="relative h-44 w-full bg-white/5 overflow-hidden">
+                              <Image
+                                src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
+                                alt={item.title}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                unoptimized
+                              />
+                              <div className="absolute top-3 right-3 bg-black/75 backdrop-blur px-2.5 py-1 rounded-lg text-[9px] text-white uppercase font-bold tracking-wider border border-white/10">
+                                {item.type}
+                              </div>
+                            </div>
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                              <div className="space-y-1">
+                                <h4 className="font-extrabold text-white text-base line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
+                                <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                  <MapPin size={12} className="text-primary" /> {item.location}
+                                </p>
+                              </div>
+                              <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                <span className="font-black text-base text-primary">Rs. {item.price.toLocaleString()}</span>
+                                <span className="text-[10px] text-primary font-bold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                                  Edit Listing →
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
+                          <Building size={20} />
                         </div>
-                      )}
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">No listings published yet.</p>
+                          <Link href="/addproperty" className="text-primary hover:underline text-xs font-extrabold mt-2 inline-block">
+                            List your first property now
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                      {/* Buyer Actions */}
-                      {user.accountType === "buyer" && prob.status !== "closed" && (
+                {activeTab === "problems" && (
+                  <div className="space-y-6 text-left">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-white">Reported Issues & Problem Tickets</h3>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {user.accountType === "seller" 
+                            ? "Manage complaints and maintenance requests filed by tenants on your boardings."
+                            : "Track issues you reported about boarding properties, landlords, or general website glitches."}
+                        </p>
+                      </div>
+
+                      {user.accountType !== "seller" && (
                         <button
-                          disabled={updatingProblemId === prob.id}
-                          onClick={() => handleStatusChange(prob.id, "closed")}
-                          className="px-3 py-1 bg-white/5 hover:bg-red-500 hover:text-white border border-white/10 rounded-lg font-bold text-[10px] transition-all text-gray-400"
+                          onClick={() => setShowGeneralReportModal(true)}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl border border-red-500/20 text-xs font-bold transition-all cursor-pointer shadow-lg shadow-red-500/5 self-start sm:self-center"
                         >
-                          Close Ticket
+                          <ShieldAlert size={14} />
+                          Report Website Bug
                         </button>
                       )}
                     </div>
+
+                    {loadingProblems ? (
+                      <div className="flex justify-center py-12">
+                        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    ) : problemsList.length > 0 ? (
+                      <div className="space-y-4">
+                        {problemsList.map((prob) => (
+                          <div key={prob.id} className="glass p-6 rounded-[2rem] border border-white/10 shadow-xl space-y-4 bg-gray-950/40">
+                            {/* Header details */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
+                              <div className="space-y-2">
+                                <span className="inline-block text-[9px] font-bold text-primary px-2.5 py-1 bg-primary-glow border border-primary/20 rounded-lg uppercase tracking-wider">
+                                  {prob.issue_type}
+                                </span>
+                                <h4 className="font-extrabold text-white text-base leading-tight">{prob.title}</h4>
+                                {prob.property_title && (
+                                  <p className="text-xs text-gray-400">
+                                    Affected boarding: <span className="text-white font-bold">{prob.property_title}</span>
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                  Filed: {formatDate(prob.created_at)}
+                                </span>
+                                {getStatusBadge(prob.status)}
+                              </div>
+                            </div>
+
+                            {/* Description text */}
+                            <div className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap bg-white/3 p-4.5 rounded-2xl border border-white/5">
+                              {prob.description}
+                            </div>
+
+                            {/* Landlord Contact Info / Tenant Contact Info if seller */}
+                            {user.accountType === "seller" && prob.profiles && (
+                              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3.5 text-xs text-left">
+                                <p className="font-bold text-[9px] uppercase tracking-widest text-gray-400 leading-none">Renter Contact details</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-gray-300 font-semibold mt-1">
+                                  <span className="flex items-center gap-2 bg-black/40 p-2.5 rounded-xl border border-white/5"><User size={14} className="text-primary flex-shrink-0" /> {prob.profiles.first_name} {prob.profiles.last_name}</span>
+                                  <span className="flex items-center gap-2 bg-black/40 p-2.5 rounded-xl border border-white/5 truncate" title={prob.profiles.email}><Mail size={14} className="text-primary flex-shrink-0 truncate" /> {prob.profiles.email}</span>
+                                  {prob.profiles.phone && (
+                                    <span className="flex items-center gap-2 bg-black/40 p-2.5 rounded-xl border border-white/5"><Phone size={14} className="text-primary flex-shrink-0" /> {prob.profiles.phone}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Status updating actions */}
+                            <div className="flex justify-end gap-2 pt-3 border-t border-white/5 text-xs">
+                              {user.accountType === "seller" && (
+                                <div className="flex items-center gap-2.5">
+                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Change Status:</span>
+                                  
+                                  <button
+                                    disabled={updatingProblemId === prob.id || prob.status === "in-progress"}
+                                    onClick={() => handleStatusChange(prob.id, "in-progress")}
+                                    className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/25 hover:shadow-lg hover:shadow-amber-500/5 rounded-lg font-bold text-[10px] transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    In Progress
+                                  </button>
+                                  
+                                  <button
+                                    disabled={updatingProblemId === prob.id || prob.status === "resolved"}
+                                    onClick={() => handleStatusChange(prob.id, "resolved")}
+                                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/5 rounded-lg font-bold text-[10px] transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    Resolved
+                                  </button>
+                                </div>
+                              )}
+
+                              {user.accountType === "buyer" && prob.status !== "closed" && (
+                                <button
+                                  disabled={updatingProblemId === prob.id}
+                                  onClick={() => handleStatusChange(prob.id, "closed")}
+                                  className="px-4 py-1.5 bg-white/5 hover:bg-red-500 hover:text-white border border-white/10 hover:border-red-500/30 rounded-lg font-bold text-[10px] transition-all text-gray-400 cursor-pointer"
+                                >
+                                  Close Ticket
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
+                          <ShieldCheck size={20} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">No reported tickets logged.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
-                <ShieldCheck size={32} className="mx-auto text-gray-600 mb-2" />
-                <p className="text-xs text-gray-400">No issues reported or complaints logged.</p>
-              </div>
-            )}
+                )}
+              </motion.div>
+            </AnimatePresence>
+
           </div>
-        )}
+
+        </div>
 
       </div>
 
@@ -931,7 +1033,7 @@ export default function ProfilePage() {
                 setGeneralSuccess("");
                 setGeneralError("");
               }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -950,7 +1052,7 @@ export default function ProfilePage() {
             ) : (
               <form onSubmit={handleGeneralReportSubmit} className="space-y-4">
                 {generalError && (
-                  <div className="bg-red-500/10 border border-red-500/25 p-3 rounded-xl text-red-400 text-xs font-semibold">
+                  <div className="bg-red-500/10 border border-red-500/25 p-3.5 rounded-2xl text-red-400 text-xs font-semibold">
                     {generalError}
                   </div>
                 )}
@@ -961,12 +1063,12 @@ export default function ProfilePage() {
                   <select
                     value={generalIssueType}
                     onChange={(e) => setGeneralIssueType(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 cursor-pointer"
+                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 cursor-pointer"
                   >
-                    <option value="General Web Problem" className="bg-gray-900 text-white">General Web Glitch / UI Bug</option>
-                    <option value="Search Glitch" className="bg-gray-900 text-white">Property Search or Filtering Error</option>
-                    <option value="Auth Issue" className="bg-gray-900 text-white">Account Login or Signup Problem</option>
-                    <option value="Other Web Issue" className="bg-gray-900 text-white">Other Website Trouble</option>
+                    <option value="General Web Problem" className="bg-gray-950 text-white">General Web Glitch / UI Bug</option>
+                    <option value="Search Glitch" className="bg-gray-950 text-white">Property Search or Filtering Error</option>
+                    <option value="Auth Issue" className="bg-gray-950 text-white">Account Login or Signup Problem</option>
+                    <option value="Other Web Issue" className="bg-gray-950 text-white">Other Website Trouble</option>
                   </select>
                 </div>
 
@@ -979,7 +1081,7 @@ export default function ProfilePage() {
                     value={generalTitle}
                     onChange={(e) => setGeneralTitle(e.target.value)}
                     placeholder="e.g., Cannot view map on room details"
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50"
+                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50"
                   />
                 </div>
 
@@ -992,14 +1094,14 @@ export default function ProfilePage() {
                     value={generalDescription}
                     onChange={(e) => setGeneralDescription(e.target.value)}
                     placeholder="Tell us what page you were on and steps to reproduce the issue."
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 resize-none"
+                    className="w-full px-4 py-3 rounded-2xl bg-[#08090a] border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmittingGeneral}
-                  className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                  className="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-primary/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isSubmittingGeneral ? "Submitting..." : "Submit Bug Report"}
                 </button>

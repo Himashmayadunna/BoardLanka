@@ -1,9 +1,27 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function MeshBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    // Check initial state
+    setIsLightMode(document.documentElement.classList.contains("light"));
+
+    // Observe theme class changes
+    const observer = new MutationObserver(() => {
+      setIsLightMode(document.documentElement.classList.contains("light"));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,7 +118,14 @@ export default function MeshBackground() {
       {/* CSS Mesh Radial Glow */}
       <div className="mesh-glow" />
       {/* Dynamic Floating Particles Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 opacity-40 mix-blend-screen" />
+      <canvas 
+        ref={canvasRef} 
+        className={`absolute inset-0 transition-opacity duration-500 ${
+          isLightMode 
+            ? "opacity-30 mix-blend-multiply" 
+            : "opacity-40 mix-blend-screen"
+        }`} 
+      />
     </div>
   );
 }
