@@ -4,7 +4,6 @@ import "./globals.css";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import SmoothScroll from "@/app/components/SmoothScroll";
-import CustomCursor from "@/app/components/CustomCursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +35,6 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SmoothScroll>
-          <CustomCursor />
           <Navbar />
           {children}
           <Footer />

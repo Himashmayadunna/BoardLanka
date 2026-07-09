@@ -23,9 +23,6 @@
   --mesh-color-2: rgba(13, 148, 136, 0.07);
   --mesh-color-3: rgba(59, 130, 246, 0.03);
 
-  --cursor-color: #10b981;
-  --cursor-ring: rgba(16, 185, 129, 0.25);
-
   --auth-left-bg-from: #08090a;
   --auth-left-bg-via: #0d0f12;
   --auth-left-bg-to: #08090a;
@@ -54,9 +51,6 @@
   --mesh-color-1: rgba(5, 150, 105, 0.05);
   --mesh-color-2: rgba(13, 148, 136, 0.04);
   --mesh-color-3: rgba(59, 130, 246, 0.02);
-
-  --cursor-color: #059669;
-  --cursor-ring: rgba(5, 150, 105, 0.25);
 
   --auth-left-bg-from: #f1f5f9;
   --auth-left-bg-via: #e2e8f0;
@@ -87,9 +81,6 @@
   --mesh-color-2: rgba(13, 148, 136, 0.07);
   --mesh-color-3: rgba(59, 130, 246, 0.03);
 
-  --cursor-color: #10b981;
-  --cursor-ring: rgba(16, 185, 129, 0.25);
-
   --auth-left-bg-from: #08090a;
   --auth-left-bg-via: #0d0f12;
   --auth-left-bg-to: #08090a;
@@ -112,8 +103,6 @@
   --color-glass-border: var(--glass-border);
   --color-text-muted: var(--text-muted);
   --color-text-primary: var(--text-primary);
-  --color-cursor-color: var(--cursor-color);
-  --color-cursor-ring: var(--cursor-ring);
   --color-auth-left-bg-from: var(--auth-left-bg-from);
   --color-auth-left-bg-via: var(--auth-left-bg-via);
   --color-auth-left-bg-to: var(--auth-left-bg-to);
@@ -128,12 +117,6 @@ body {
   font-family: var(--font-geist-sans), Arial, sans-serif;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .custom-cursor-active, .custom-cursor-active * {
-    cursor: none !important;
-  }
 }
 
 /* Custom Scrollbar */
