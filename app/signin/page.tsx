@@ -45,20 +45,25 @@ export default function SignInPage() {
     const group = new THREE.Group();
     scene.add(group);
 
+    const isLight = document.documentElement.classList.contains("light");
+    const matColor = isLight ? 0x059669 : 0x1f2937;
+    const matOpacity = isLight ? 0.15 : 0.85;
+    const lineColor = isLight ? 0x0f766e : 0x10b981;
+
     // Primitives - Stylized House Shape
     const baseGeo = new THREE.BoxGeometry(1.6, 1.0, 1.4);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x1f2937,
+      color: matColor,
       roughness: 0.3,
       metalness: 0.8,
       transparent: true,
-      opacity: 0.85,
+      opacity: matOpacity,
     });
     const base = new THREE.Mesh(baseGeo, material);
     group.add(base);
 
     const baseEdges = new THREE.EdgesGeometry(baseGeo);
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 });
+    const lineMat = new THREE.LineBasicMaterial({ color: lineColor, linewidth: 2 });
     const baseOutline = new THREE.LineSegments(baseEdges, lineMat);
     group.add(baseOutline);
 
@@ -178,19 +183,19 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-black pt-16">
+    <div className="relative min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-background pt-16">
       <MeshBackground />
 
       {/* Left side: 3D Animation View */}
       <div 
         ref={leftContainerRef}
-        className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center relative border-r border-white/5 bg-gradient-to-br from-black via-gray-950 to-black overflow-hidden"
+        className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center relative border-r border-auth-left-border bg-gradient-to-br from-auth-left-bg-from via-auth-left-bg-via to-auth-left-bg-to overflow-hidden"
       >
         <div className="text-center max-w-lg z-10 space-y-4 px-8 mb-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary leading-tight">
             Welcome Back to BoardLanka
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-text-muted text-sm leading-relaxed">
             Sign in to check saved rental properties, manage your active listings, and resume direct conversations with property hosts.
           </p>
         </div>
@@ -207,10 +212,10 @@ export default function SignInPage() {
               <div className="w-9 h-9 bg-gradient-to-tr from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                 <span className="text-white font-bold text-base">BL</span>
               </div>
-              <span className="text-xl font-bold text-white">Board<span className="text-primary">Lanka</span></span>
+              <span className="text-xl font-bold text-text-primary">Board<span className="text-primary">Lanka</span></span>
             </Link>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white">Welcome Back</h1>
-            <p className="text-xs text-gray-400">Sign in to your account to continue</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary">Welcome Back</h1>
+            <p className="text-xs text-text-muted">Sign in to your account to continue</p>
           </div>
 
           <div className="glass p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
@@ -220,8 +225,8 @@ export default function SignInPage() {
                 <div className="w-16 h-16 bg-primary-glow rounded-full flex items-center justify-center mx-auto text-primary border border-primary/20 animate-bounce">
                   <CheckCircle size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-white">Signed In!</h3>
-                <p className="text-xs text-gray-400">
+                <h3 className="text-xl font-bold text-text-primary">Signed In!</h3>
+                <p className="text-xs text-text-muted">
                   Authentication successful. Loading your luxury dashboard profile...
                 </p>
               </div>
@@ -230,7 +235,7 @@ export default function SignInPage() {
                 
                 {/* Email */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Email Address</label>
+                  <label className="text-xs font-semibold text-text-muted">Email Address</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -238,15 +243,15 @@ export default function SignInPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="john@example.com"
                       required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <Mail size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <Mail size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-gray-400">Password</label>
+                  <label className="text-xs font-semibold text-text-muted">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -254,13 +259,13 @@ export default function SignInPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       required
-                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 transition-all animate-none"
                     />
-                    <Lock size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                    <Lock size={14} className="absolute left-3.5 top-3.5 text-text-muted" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-gray-400 hover:text-white"
+                      className="absolute right-3.5 top-3.5 text-text-muted hover:text-text-primary"
                     >
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -274,9 +279,9 @@ export default function SignInPage() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded accent-primary border-white/10 bg-white/5 w-4 h-4"
+                      className="rounded accent-primary border-card-border bg-card-bg w-4 h-4"
                     />
-                    <span className="text-[11px] text-gray-400">Remember me</span>
+                    <span className="text-[11px] text-text-muted">Remember me</span>
                   </label>
                   <Link href="/forgot-password" className="text-[11px] text-primary hover:underline font-semibold">
                     Forgot password?
@@ -302,17 +307,17 @@ export default function SignInPage() {
                 {/* Social logins */}
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/5"></div>
+                    <div className="w-full border-t border-card-border"></div>
                   </div>
                   <div className="relative flex justify-center text-[10px]">
-                    <span className="px-3 bg-gray-950 text-gray-500 font-semibold uppercase">Or continue with</span>
+                    <span className="px-3 bg-background text-text-muted font-semibold uppercase">Or continue with</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <button 
                     type="button" 
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-semibold text-gray-300"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-card-bg border border-card-border hover:bg-card-hover-bg transition-colors text-xs font-semibold text-text-primary"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -324,7 +329,7 @@ export default function SignInPage() {
                   </button>
                   <button 
                     type="button" 
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-semibold text-gray-300"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-card-bg border border-card-border hover:bg-card-hover-bg transition-colors text-xs font-semibold text-text-primary"
                   >
                     <Github size={16} />
                     <span>GitHub</span>

@@ -22,9 +22,13 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  ArrowLeft,
+  Share2,
+  Grid
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Property {
   id: string | number;
@@ -142,6 +146,84 @@ function FindRoomsContent() {
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [calendarDate, setCalendarDate] = useState("");
   const [panX, setPanX] = useState(50); // 360 viewer simulated drag percentage
+  const [showShareToast, setShowShareToast] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Helper to dynamically extend image array with premium fallback images
+  const getExtendedImages = (property: Property) => {
+    const baseImages = property.images || [];
+    if (baseImages.length >= 5) return baseImages;
+    
+    const fallbackHouses = [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=80"
+    ];
+    
+    const fallbackLands = [
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80",
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80",
+      "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1200&q=80",
+      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80",
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80"
+    ];
+
+    const fallbackRooms = [
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&q=80",
+      "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&q=80",
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80"
+    ];
+
+    const pool = property.type === "land" ? fallbackLands : (property.type === "room" || property.type === "annex" ? fallbackRooms : fallbackHouses);
+    
+    const results = [...baseImages];
+    let poolIndex = 0;
+    while (results.length < 5 && poolIndex < pool.length) {
+      const img = pool[poolIndex++];
+      if (!results.includes(img)) {
+        results.push(img);
+      }
+    }
+    return results;
+  };
+
+  const handleShare = () => {
+    if (!selectedProperty) return;
+    const url = `${window.location.origin}${window.location.pathname}?id=${selectedProperty.id}`;
+    navigator.clipboard.writeText(url);
+    setShowShareToast(true);
+    setTimeout(() => setShowShareToast(false), 2000);
+  };
+
+  const handleOverlayScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    if (scrollTop > 80) {
+      setIsScrolled(true);
+    } else {
+      setIsScrolled(false);
+    }
+  };
+
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    const clientWidth = e.currentTarget.clientWidth;
+    if (clientWidth > 0) {
+      const idx = Math.round(scrollLeft / clientWidth);
+      setCurrentImageIdx(idx);
+    }
+  };
+
+  const openLightbox = (index: number) => {
+    setLightboxIdx(index);
+    setLightboxOpen(true);
+  };
 
   // Problem Reporting states
   const [showReportModal, setShowReportModal] = useState(false);
@@ -208,6 +290,18 @@ function FindRoomsContent() {
     }
   }, [searchParams]);
 
+  // Lock body scroll when detail overlay is open
+  useEffect(() => {
+    if (selectedProperty) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedProperty]);
+
   // Fetch full details of a single property (with all images)
   const fetchSingleDetail = async (id: string | number) => {
     try {
@@ -264,11 +358,16 @@ function FindRoomsContent() {
   };
 
   const handleOpenDetail = (id: string | number) => {
-    router.push(`${window.location.pathname}?id=${id}`);
+    const params = new URLSearchParams(window.location.search);
+    params.set("id", String(id));
+    router.push(`${window.location.pathname}?${params.toString()}`);
   };
 
   const handleCloseDetail = () => {
-    router.push(window.location.pathname);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("id");
+    const queryString = params.toString();
+    router.push(`${window.location.pathname}${queryString ? `?${queryString}` : ""}`);
   };
 
   const handleReportSubmit = async (e: React.FormEvent) => {
@@ -554,392 +653,627 @@ function FindRoomsContent() {
 
       </div>
 
-      {/* Immersive Detail Modal Overlay */}
-      {selectedProperty && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative bg-gray-950 border border-white/10 rounded-3xl w-full max-w-5xl overflow-hidden max-h-[92vh] flex flex-col animate-slide-up shadow-2xl">
-            
-            {/* Modal Close */}
-            <button 
-              onClick={handleCloseDetail}
-              className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/70 hover:bg-black text-white hover:scale-105 border border-white/10 transition-all"
-            >
-              <X size={18} />
-            </button>
+      {/* Immersive Detail Full Page Overlay */}
+      <AnimatePresence>
+        {selectedProperty && (
+          <motion.div 
+            ref={overlayRef}
+            onScroll={handleOverlayScroll}
+            data-lenis-prevent
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-50 bg-background overflow-y-auto w-full h-full min-h-screen text-text-primary select-text"
+            style={{ overflowY: "auto" }}
+          >
+            {/* Sticky Modern Glassmorphic Header */}
+            <div className={`sticky top-0 z-40 w-full px-6 py-4 flex items-center justify-between transition-all duration-300 border-b ${
+              isScrolled 
+                ? "bg-glass-bg border-glass-border shadow-lg" 
+                : "bg-transparent border-transparent"
+            }`}>
+              <button 
+                onClick={handleCloseDetail}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary font-bold text-xs border border-card-border group transition-all cursor-pointer animate-none"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                Back to Listings
+              </button>
+
+              {/* Title reveals on scroll */}
+              <div className={`hidden md:block max-w-xl text-center transition-all duration-300 ${
+                isScrolled ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+              }`}>
+                <h3 className="font-extrabold text-sm text-text-primary line-clamp-1">{selectedProperty.title}</h3>
+                <p className="text-[10px] text-primary font-semibold tracking-wider uppercase mt-0.5">{selectedProperty.location}</p>
+              </div>
+
+              {/* Header Right Actions */}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleShare}
+                  className="p-2.5 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary border border-card-border transition-all flex items-center justify-center cursor-pointer animate-none"
+                  title="Share property link"
+                >
+                  <Share2 size={15} />
+                </button>
+                <button 
+                  onClick={(e) => toggleFavorite(Number(selectedProperty.id), e)}
+                  className="p-2.5 rounded-xl bg-card-bg hover:bg-card-hover-bg text-text-primary border border-card-border transition-all flex items-center justify-center cursor-pointer animate-none"
+                  title="Add to favorites"
+                >
+                  <Heart 
+                    size={15} 
+                    className={favorites.includes(Number(selectedProperty.id)) ? "fill-red-500 text-red-500" : "text-text-primary"} 
+                  />
+                </button>
+              </div>
+            </div>
 
             {loadingDetail ? (
-              <div className="flex flex-col items-center justify-center h-[500px]">
-                <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin mb-4" />
-                <p className="text-gray-400 text-sm">Fetching detailed listing...</p>
+              <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+                <p className="text-gray-400 text-sm font-medium animate-pulse">Loading property details...</p>
               </div>
             ) : (
-              <div className="overflow-y-auto flex-1">
-                
-                {/* Visual Viewport Header (Gallery or 360 preview) */}
-                <div className="relative h-64 md:h-[400px] w-full bg-black">
-                  
-                  {activeTab === "details" && (
-                    <>
-                      {/* Image Gallery view */}
-                      <Image 
-                        src={selectedProperty.images?.[currentImageIdx] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"} 
-                        alt={selectedProperty.title}
-                        fill
-                        className="object-cover transition-opacity duration-300"
-                        unoptimized
-                      />
-                      {/* Slider Navigation */}
-                      {selectedProperty.images && selectedProperty.images.length > 1 && (
-                        <>
-                          <button 
-                            onClick={prevImage}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/60 hover:bg-black text-white border border-white/10 transition-colors"
+              <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-24">
+                {(() => {
+                  const extendedImages = getExtendedImages(selectedProperty);
+                  return (
+                    <div className="space-y-8">
+                      {/* Image Presentation */}
+                      <div className="relative">
+                        {/* Desktop Bento Collage Grid */}
+                        <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-3 h-[450px] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl">
+                          {/* Main Left Image (Col-span 2, Row-span 2) */}
+                          <div className="col-span-2 row-span-2 relative overflow-hidden group">
+                            <Image 
+                              src={extendedImages[0]} 
+                              alt={selectedProperty.title}
+                              fill
+                              className="object-cover transition-transform duration-700 scale-100 group-hover:scale-[1.02] cursor-pointer"
+                              onClick={() => openLightbox(0)}
+                              unoptimized
+                            />
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300 pointer-events-none" />
+                          </div>
+
+                          {/* 4 smaller images on the right */}
+                          {extendedImages.slice(1, 5).map((img, idx) => (
+                            <div key={idx} className="relative overflow-hidden group">
+                              <Image 
+                                src={img} 
+                                alt={`${selectedProperty.title} detail ${idx + 1}`}
+                                fill
+                                className="object-cover transition-transform duration-700 scale-100 group-hover:scale-[1.02] cursor-pointer"
+                                onClick={() => openLightbox(idx + 1)}
+                                unoptimized
+                            />
+                              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300 pointer-events-none" />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Mobile Swipeable Carousel */}
+                        <div className="block md:hidden relative h-[280px] w-full rounded-2xl overflow-hidden border border-white/10 bg-black">
+                          <div 
+                            onScroll={handleMobileScroll}
+                            className="flex overflow-x-auto snap-x snap-mandatory h-full w-full scrollbar-none"
                           >
-                            <ChevronLeft size={16} />
-                          </button>
-                          <button 
-                            onClick={nextImage}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/60 hover:bg-black text-white border border-white/10 transition-colors"
-                          >
-                            <ChevronRight size={16} />
-                          </button>
-                          {/* Image count markers */}
+                            {extendedImages.map((img, idx) => (
+                              <div key={idx} className="relative w-full h-full flex-shrink-0 snap-center">
+                                <Image 
+                                  src={img} 
+                                  alt={`${selectedProperty.title} ${idx + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  onClick={() => openLightbox(idx)}
+                                  unoptimized
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Indicator dots for Mobile slider */}
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/60 px-3 py-1 rounded-full border border-white/10">
-                            {selectedProperty.images.map((_, i) => (
-                              <button
-                                key={i}
-                                onClick={() => setCurrentImageIdx(i)}
-                                className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentImageIdx ? "bg-primary w-4" : "bg-white/40"}`}
+                            {extendedImages.slice(0, 5).map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIdx ? "bg-primary w-4" : "bg-white/40"}`}
                               />
                             ))}
                           </div>
-                        </>
-                      )}
-                    </>
-                  )}
-
-                  {activeTab === "360" && (
-                    <div 
-                      ref={panoramaRef}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUpOrLeave}
-                      onMouseLeave={handleMouseUpOrLeave}
-                      className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center bg-gray-900"
-                    >
-                      {/* Simulated 360 panorama view using wide background image and drag shifts */}
-                      <div 
-                        className="w-[200%] h-full bg-cover bg-center transition-all ease-out pointer-events-none"
-                        style={{
-                          backgroundImage: `url(${selectedProperty.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'})`,
-                          backgroundPosition: `${panX}% center`,
-                          filter: 'brightness(0.95)'
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-                      <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
-                        <Compass size={14} className="animate-spin" style={{ animationDuration: '4s' }} />
-                        360 View: Drag left or right to explore
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === "map" && (
-                    <div className="absolute inset-0 w-full h-full">
-                      {/* Interactive Google Map iframe mock */}
-                      <iframe
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedProperty.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        className="filter invert hue-rotate-180 opacity-80"
-                      />
-                      <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
-                        <Map size={14} />
-                        Map Location
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Layout Tabs Selector */}
-                  <div className="absolute bottom-4 right-4 flex gap-2">
-                    <button 
-                      onClick={() => setActiveTab("details")}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border transition-all ${
-                        activeTab === "details" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10 hover:bg-black"
-                      }`}
-                    >
-                      Gallery
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab("360")}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border transition-all ${
-                        activeTab === "360" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10 hover:bg-black"
-                      }`}
-                    >
-                      360° Tour
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab("map")}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border transition-all ${
-                        activeTab === "map" ? "bg-primary text-white border-primary" : "bg-black/60 text-gray-300 border-white/10 hover:bg-black"
-                      }`}
-                    >
-                      Map View
-                    </button>
-                  </div>
-
-                </div>
-
-                {/* Content Panel Grid */}
-                <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  
-                  {/* Left Column: Descriptions, Amenities, Surrounding */}
-                  <div className="lg:col-span-8 space-y-8">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full capitalize">
-                          {selectedProperty.type}
-                        </span>
-                        {selectedProperty.seller?.verified && (
-                          <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                            <CheckCircle size={12} />
-                            Verified Seller
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2">{selectedProperty.title}</h2>
-                      <p className="text-sm text-gray-400 flex items-center gap-1">
-                        <MapPin size={14} className="text-primary" />
-                        {selectedProperty.location}
-                      </p>
-                    </div>
-
-                    {/* Stats metrics */}
-                    <div className="grid grid-cols-3 gap-4 border-y border-white/5 py-5">
-                      {selectedProperty.bedrooms > 0 && (
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500 font-medium">Bedrooms</p>
-                          <p className="text-lg font-bold text-white mt-1 flex items-center justify-center gap-1">
-                            <Bed size={16} className="text-primary" />
-                            {selectedProperty.bedrooms}
-                          </p>
                         </div>
-                      )}
-                      {selectedProperty.bathrooms && selectedProperty.bathrooms > 0 && (
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500 font-medium">Bathrooms</p>
-                          <p className="text-lg font-bold text-white mt-1 flex items-center justify-center gap-1">
-                            <Bath size={16} className="text-primary" />
-                            {selectedProperty.bathrooms}
-                          </p>
-                        </div>
-                      )}
-                      {selectedProperty.size && (
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500 font-medium">Area Size</p>
-                          <p className="text-lg font-bold text-white mt-1 flex items-center justify-center gap-1">
-                            <Maximize size={16} className="text-primary" />
-                            {selectedProperty.size} Sq.Ft
-                          </p>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Description */}
-                    <div className="space-y-3 text-left">
-                      <h3 className="text-lg font-bold text-white">About the Property</h3>
-                      <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-line">
-                        {selectedProperty.description || "No description provided."}
-                      </p>
-                    </div>
-
-                    {/* Amenities list */}
-                    <div className="space-y-4 text-left">
-                      <h3 className="text-lg font-bold text-white">Amenities Offered</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {selectedProperty.amenities?.map((amenity, i) => (
-                          <div key={i} className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                            <CheckCircle size={12} className="text-primary" />
-                            <span>{amenity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Surrounding Places Checklist */}
-                    <div className="space-y-5 text-left border-t border-white/5 pt-6">
-                      <h3 className="text-lg font-bold text-white">Nearby Institutions & Spots</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
-                          <h4 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                            <BookOpen size={14} className="text-blue-400" />
-                            Universities
-                          </h4>
-                          <ul className="text-xs text-gray-400 space-y-1.5">
-                            <li>• University campus (1.2 km)</li>
-                            <li>• Institute of Tech (2.5 km)</li>
-                          </ul>
-                        </div>
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
-                          <h4 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                            <Activity size={14} className="text-red-400" />
-                            Hospitals
-                          </h4>
-                          <ul className="text-xs text-gray-400 space-y-1.5">
-                            <li>• City Medical Centre (800m)</li>
-                            <li>• General Hospital (3.4 km)</li>
-                          </ul>
-                        </div>
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
-                          <h4 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                            <ShoppingBag size={14} className="text-orange-400" />
-                            Supermarkets
-                          </h4>
-                          <ul className="text-xs text-gray-400 space-y-1.5">
-                            <li>• Keells Super (400m)</li>
-                            <li>• Cargills Food City (600m)</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Right Column: Booking Card & Calendar */}
-                  <div className="lg:col-span-4 lg:sticky lg:top-4 bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 shadow-xl">
-                    
-                    {/* Price summary */}
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">Monthly Rental</p>
-                      <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-3xl font-extrabold text-primary">Rs. {selectedProperty.price.toLocaleString()}</span>
-                        <span className="text-xs text-gray-400">/ month</span>
-                      </div>
-                      {selectedProperty.advancePayment && (
-                        <p className="text-xs text-orange-400 mt-1">
-                          Advance Payment Required: Rs. {selectedProperty.advancePayment.toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Mock Calendar Date Picker */}
-                    <div className="space-y-2 text-left">
-                      <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
-                        <Calendar size={14} className="text-primary" />
-                        Check Availability Date
-                      </label>
-                      <input
-                        type="date"
-                        value={calendarDate}
-                        onChange={(e) => setCalendarDate(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-                      />
-                    </div>
-
-                    {/* Booking / Contact Actions */}
-                    <div className="space-y-3">
-                      {!showContactDetails ? (
-                        <button
-                          onClick={() => setShowContactDetails(true)}
-                          className="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-xl font-bold text-xs shadow-md shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2"
+                        {/* View all photos action overlay button */}
+                        <button 
+                          onClick={() => openLightbox(0)}
+                          className="absolute bottom-4 right-4 bg-black/75 hover:bg-black text-white border border-white/10 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                         >
-                          Book Now / Contact Host
+                          <Grid size={14} />
+                          View all photos
                         </button>
-                      ) : (
-                        <div className="space-y-2.5 pt-2 border-t border-white/5">
-                          <p className="text-xs text-gray-500 text-center font-medium">Host Contact details</p>
-                          <div className="text-center mb-3">
-                            <h4 className="font-bold text-sm text-white">{selectedProperty.seller?.name || "Property Owner"}</h4>
+                      </div>
+
+                      {/* Main Info Split-Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        
+                        {/* Left Column (Main specs & details) */}
+                        <div className="lg:col-span-8 space-y-8 text-left">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full capitalize">
+                                {selectedProperty.type}
+                              </span>
+                              {selectedProperty.seller?.verified && (
+                                <span className="bg-emerald-500/25 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-emerald-500/20">
+                                  <CheckCircle size={12} className="fill-emerald-400/20" />
+                                  Verified Seller
+                                </span>
+                              )}
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight leading-tight mb-2">{selectedProperty.title}</h2>
+                            <p className="text-sm text-text-muted flex items-center gap-1.5 mt-2">
+                              <MapPin size={16} className="text-primary" />
+                              {selectedProperty.location}
+                            </p>
                           </div>
 
-                          <a
-                            href={`tel:${selectedProperty.seller?.phone.replace(/\s/g, '')}`}
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold transition-colors"
-                          >
-                            <Phone size={14} className="text-primary" />
-                            Call: {selectedProperty.seller?.phone}
-                          </a>
+                          {/* Stats Metrics (Specs) */}
+                          <div className="grid grid-cols-3 gap-4 border-y border-card-border py-6">
+                            {selectedProperty.bedrooms > 0 && (
+                              <div className="flex items-center gap-3 bg-card-bg p-4 rounded-2xl border border-card-border">
+                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                                  <Bed size={18} />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Bedrooms</p>
+                                  <p className="text-sm font-extrabold text-text-primary mt-0.5">{selectedProperty.bedrooms} Rooms</p>
+                                </div>
+                              </div>
+                            )}
+                            {selectedProperty.bathrooms && selectedProperty.bathrooms > 0 && (
+                              <div className="flex items-center gap-3 bg-card-bg p-4 rounded-2xl border border-card-border">
+                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                                  <Bath size={18} />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Bathrooms</p>
+                                  <p className="text-sm font-extrabold text-text-primary mt-0.5">{selectedProperty.bathrooms} Baths</p>
+                                </div>
+                              </div>
+                            )}
+                            {selectedProperty.size && (
+                              <div className="flex items-center gap-3 bg-card-bg p-4 rounded-2xl border border-card-border">
+                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                                  <Maximize size={18} />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Area Size</p>
+                                  <p className="text-sm font-extrabold text-text-primary mt-0.5 truncate">{selectedProperty.size} Sq.Ft</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
 
-                          <a
-                            href={`https://wa.me/${selectedProperty.seller?.whatsapp}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-600 hover:text-white text-emerald-400 text-xs font-bold transition-all"
-                          >
-                            <MessageCircle size={14} />
-                            WhatsApp Chat
-                          </a>
+                          {/* About Section */}
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-text-primary">About the Space</h3>
+                            <p className="text-sm text-text-muted leading-relaxed whitespace-pre-line bg-card-bg p-5 rounded-2xl border border-card-border">
+                              {selectedProperty.description || "No description provided for this listing."}
+                            </p>
+                          </div>
 
-                          {selectedProperty.seller?.email && (
-                            <a
-                              href={`mailto:${selectedProperty.seller?.email}`}
-                              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/25 hover:bg-blue-500 hover:text-white text-blue-400 text-xs font-bold transition-all"
-                            >
-                              <Mail size={14} />
-                              Email Host
-                            </a>
+                          {/* Amenities Offered */}
+                          {selectedProperty.amenities && selectedProperty.amenities.length > 0 && (
+                            <div className="space-y-4">
+                              <h3 className="text-xl font-bold text-text-primary">Amenities Offered</h3>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {selectedProperty.amenities.map((amenity, i) => (
+                                  <div key={i} className="flex items-center gap-2.5 p-3.5 bg-card-bg rounded-2xl border border-card-border text-xs text-text-primary hover:border-primary/25 transition-all">
+                                    <CheckCircle size={14} className="text-primary flex-shrink-0" />
+                                    <span>{amenity}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
+
+                          {/* Visual Tour & Location Console */}
+                          <div className="space-y-4 border-t border-card-border pt-8">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                              <div>
+                                <h3 className="text-xl font-bold text-text-primary">Visual Tour & Location</h3>
+                                <p className="text-xs text-text-muted mt-1">Explore the virtual 360° landscape and maps of this property.</p>
+                              </div>
+                              
+                              {/* Tabs */}
+                              <div className="flex gap-2 bg-card-bg p-1 rounded-xl border border-card-border">
+                                <button 
+                                  onClick={() => setActiveTab("360")}
+                                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer animate-none ${
+                                    activeTab === "360" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-text-muted hover:text-text-primary"
+                                  }`}
+                                >
+                                  <Compass size={14} />
+                                  360° Tour
+                                </button>
+                                <button 
+                                  onClick={() => setActiveTab("map")}
+                                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer animate-none ${
+                                    activeTab === "map" ? "bg-primary text-white shadow-md shadow-primary/10" : "text-text-muted hover:text-text-primary"
+                                  }`}
+                                >
+                                  <Map size={14} />
+                                  Map Location
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Interactive Area */}
+                            <div className="relative h-64 md:h-[450px] w-full bg-gray-950 rounded-3xl overflow-hidden border border-white/10 shadow-inner">
+                              {activeTab === "360" && (
+                                <div 
+                                  ref={panoramaRef}
+                                  onMouseDown={handleMouseDown}
+                                  onMouseMove={handleMouseMove}
+                                  onMouseUp={handleMouseUpOrLeave}
+                                  onMouseLeave={handleMouseUpOrLeave}
+                                  className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center"
+                                >
+                                  <div 
+                                    className="w-[200%] h-full bg-cover bg-center transition-all ease-out pointer-events-none"
+                                    style={{
+                                      backgroundImage: `url(${extendedImages[0]})`,
+                                      backgroundPosition: `${panX}% center`,
+                                      filter: 'brightness(0.9)'
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+                                  <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                                    <Compass size={14} className="animate-spin" style={{ animationDuration: '4s' }} />
+                                    Drag left or right to explore in 360°
+                                  </div>
+                                </div>
+                              )}
+
+                              {activeTab === "map" && (
+                                <div className="absolute inset-0 w-full h-full">
+                                  <iframe
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedProperty.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen
+                                    loading="lazy"
+                                    className="filter invert hue-rotate-180 opacity-80"
+                                  />
+                                  <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                                    <MapPin size={14} />
+                                    Google Maps Location View
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Nearby Institutions Checklist */}
+                          <div className="space-y-4 border-t border-card-border pt-8">
+                            <h3 className="text-xl font-bold text-text-primary">Nearby spots & convenience</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="p-5 bg-card-bg rounded-3xl border border-card-border space-y-3.5 hover:border-card-hover-border transition-colors">
+                                <h4 className="font-bold text-xs text-text-primary uppercase tracking-wider flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+                                    <BookOpen size={14} />
+                                  </div>
+                                  Universities
+                                </h4>
+                                <ul className="text-xs text-text-muted space-y-2">
+                                  <li className="flex items-center gap-1.5">• University campus (1.2 km)</li>
+                                  <li className="flex items-center gap-1.5">• Institute of Technology (2.5 km)</li>
+                                </ul>
+                              </div>
+                              <div className="p-5 bg-card-bg rounded-3xl border border-card-border space-y-3.5 hover:border-card-hover-border transition-colors">
+                                <h4 className="font-bold text-xs text-text-primary uppercase tracking-wider flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-red-500/10 text-red-400">
+                                    <Activity size={14} />
+                                  </div>
+                                  Hospitals
+                                </h4>
+                                <ul className="text-xs text-text-muted space-y-2">
+                                  <li className="flex items-center gap-1.5">• City Medical Centre (800m)</li>
+                                  <li className="flex items-center gap-1.5">• General Hospital (3.4 km)</li>
+                                </ul>
+                              </div>
+                              <div className="p-5 bg-card-bg rounded-3xl border border-card-border space-y-3.5 hover:border-card-hover-border transition-colors">
+                                <h4 className="font-bold text-xs text-text-primary uppercase tracking-wider flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400">
+                                    <ShoppingBag size={14} />
+                                  </div>
+                                  Supermarkets
+                                </h4>
+                                <ul className="text-xs text-text-muted space-y-2">
+                                  <li className="flex items-center gap-1.5">• Keells Super (400m)</li>
+                                  <li className="flex items-center gap-1.5">• Cargills Food City (600m)</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
-                      )}
+
+                        {/* Right Column: Floating Contact/Booking Widget */}
+                        <div id="mobile-contact-trigger" className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                          
+                          {/* Booking Card */}
+                          <div className="glass border border-card-border rounded-[2rem] p-6 shadow-2xl space-y-6">
+                            {/* Price Header */}
+                            <div className="flex items-center justify-between border-b border-card-border pb-5">
+                              <div>
+                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Monthly Rental</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                  <span className="text-3xl font-black text-primary">Rs. {selectedProperty.price.toLocaleString()}</span>
+                                  <span className="text-xs text-text-muted">/mo</span>
+                                </div>
+                              </div>
+                              <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-extrabold px-3 py-1.5 rounded-xl uppercase tracking-wider">
+                                {selectedProperty.available ? "Available" : "Leased"}
+                              </span>
+                            </div>
+
+                            {/* Advance payment */}
+                            {selectedProperty.advancePayment && (
+                              <div className="bg-orange-500/10 border border-orange-500/25 p-3.5 rounded-2xl text-orange-400 flex items-center gap-2">
+                                <ShieldAlert size={16} className="flex-shrink-0" />
+                                <p className="text-[11px] leading-tight text-left">
+                                  <strong>Advance:</strong> Rs. {selectedProperty.advancePayment.toLocaleString()}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Date picker */}
+                            <div className="space-y-2 text-left">
+                              <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+                                <Calendar size={14} className="text-primary" />
+                                Desired Move-in Date
+                              </label>
+                              <input
+                                type="date"
+                                value={calendarDate}
+                                onChange={(e) => setCalendarDate(e.target.value)}
+                                className="w-full px-4 py-3 rounded-2xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+                              />
+                            </div>
+
+                            {/* Booking Button / Contact Details */}
+                            <div className="space-y-3 pt-2">
+                              {!showContactDetails ? (
+                                <button
+                                  onClick={() => setShowContactDetails(true)}
+                                  className="w-full bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-bold text-xs shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer animate-none"
+                                >
+                                  Book Now / Contact Host
+                                </button>
+                              ) : (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="space-y-3 pt-2 border-t border-card-border"
+                                >
+                                  <p className="text-xs text-text-muted text-center font-semibold uppercase tracking-wider mb-2">Host Contacts</p>
+                                  
+                                  <div className="flex items-center gap-3 p-3 bg-card-bg rounded-2xl border border-card-border mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-sm">
+                                      {selectedProperty.seller?.name?.slice(0, 2).toUpperCase() || "OWN"}
+                                    </div>
+                                    <div className="text-left">
+                                      <h4 className="font-bold text-xs text-text-primary leading-none">{selectedProperty.seller?.name || "Property Owner"}</h4>
+                                      <span className="text-[10px] text-text-muted mt-1 block font-semibold text-emerald-400">Verified Landlord</span>
+                                    </div>
+                                  </div>
+
+                                  <a
+                                    href={`tel:${selectedProperty.seller?.phone.replace(/\s/g, '')}`}
+                                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-card-bg border border-card-border hover:bg-card-hover-bg text-text-primary text-xs font-bold transition-all hover:scale-[1.01] active:scale-99"
+                                  >
+                                    <Phone size={14} className="text-primary" />
+                                    Call: {selectedProperty.seller?.phone}
+                                  </a>
+
+                                  <a
+                                    href={`https://wa.me/${selectedProperty.seller?.whatsapp}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-600 hover:text-white text-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10 text-xs font-bold transition-all hover:scale-[1.01] active:scale-99"
+                                  >
+                                    <MessageCircle size={14} />
+                                    WhatsApp Message
+                                  </a>
+
+                                  {selectedProperty.seller?.email && (
+                                    <a
+                                      href={`mailto:${selectedProperty.seller?.email}`}
+                                      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-blue-500/10 border border-blue-500/25 hover:bg-blue-500 hover:text-white text-blue-400 hover:shadow-lg hover:shadow-blue-500/10 text-xs font-bold transition-all hover:scale-[1.01] active:scale-99"
+                                    >
+                                      <Mail size={14} />
+                                      Send Email
+                                    </a>
+                                  )}
+                                </motion.div>
+                              )}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="border-t border-card-border pt-4">
+                              {/* Safety Tips badge */}
+                              <div className="flex gap-2.5 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-400">
+                                <ShieldAlert size={16} className="flex-shrink-0 mt-0.5" />
+                                <p className="text-[10px] leading-relaxed text-left">
+                                  <strong>Safety warning:</strong> Always meet landlords in person and verify listing conditions before signing contracts or transferring advance deposits.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Secondary actions container (Report problem) */}
+                          <button
+                            onClick={() => {
+                              const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+                              if (!token) {
+                                alert("Please sign in first to report property problems.");
+                                router.push("/signin");
+                                return;
+                              }
+                              setShowReportModal(true);
+                            }}
+                            className="w-full bg-red-500/5 text-red-400/80 hover:bg-red-500 hover:text-white border border-red-500/10 py-3.5 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                          >
+                            <ShieldAlert size={14} />
+                            Report problem with this property
+                          </button>
+
+                        </div>
+
+                      </div>
                     </div>
-
-                    {/* Report problem button */}
-                    <button
-                      onClick={() => {
-                        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-                        if (!token) {
-                          alert("Please sign in first to report property problems.");
-                          router.push("/signin");
-                          return;
-                        }
-                        setShowReportModal(true);
-                      }}
-                      className="w-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
-                    >
-                      <ShieldAlert size={14} />
-                      Report a Problem
-                    </button>
-
-                    {/* Safety Tip warning badge */}
-                    <div className="flex gap-2 p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl text-amber-400">
-                      <ShieldAlert size={16} className="flex-shrink-0 mt-0.5" />
-                      <p className="text-[10px] leading-relaxed text-left">
-                        <strong>Safety Warning:</strong> Visit the listing site in person. Never send advanced deposits or money transfers online before confirming details.
-                      </p>
-                    </div>
-
-                  </div>
-
-                </div>
-
+                  );
+                })()}
               </div>
             )}
 
-          </div>
-        </div>
-      )}
+            {/* Sticky Mobile Bottom CTA Bar */}
+            {!loadingDetail && selectedProperty && (
+              <div className="fixed bottom-0 left-0 right-0 z-40 bg-glass-bg backdrop-blur-md border-t border-glass-border p-4 flex items-center justify-between md:hidden">
+                <div>
+                  <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider">Rental Price</p>
+                  <p className="text-lg font-black text-primary">Rs. {selectedProperty.price.toLocaleString()}<span className="text-[10px] text-text-muted font-normal"> /mo</span></p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowContactDetails(true);
+                    const element = document.getElementById("mobile-contact-trigger");
+                    if (element) {
+                      element.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-6 py-3 rounded-xl transition-all cursor-pointer animate-none"
+                >
+                  Contact Host
+                </button>
+              </div>
+            )}
+
+            {/* Lightbox Gallery Modal */}
+            <AnimatePresence>
+              {lightboxOpen && selectedProperty && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 animate-fade-in"
+                >
+                  {/* Lightbox Header */}
+                  <div className="flex items-center justify-between text-white w-full max-w-7xl mx-auto">
+                    <span className="text-xs font-semibold text-gray-400">
+                      Image {lightboxIdx + 1} of {getExtendedImages(selectedProperty).length}
+                    </span>
+                    <button 
+                      onClick={() => setLightboxOpen(false)}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 flex items-center justify-center cursor-pointer"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Lightbox Main Image */}
+                  <div className="relative flex-1 w-full max-h-[70vh] flex items-center justify-center my-4">
+                    <button 
+                      onClick={() => setLightboxIdx(prev => prev === 0 ? getExtendedImages(selectedProperty).length - 1 : prev - 1)}
+                      className="absolute left-4 z-10 p-3 rounded-full bg-black/60 hover:bg-black text-white border border-white/10 transition-all flex items-center justify-center cursor-pointer"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    
+                    <div className="relative w-full h-full max-w-5xl">
+                      <Image 
+                        src={getExtendedImages(selectedProperty)[lightboxIdx]} 
+                        alt={`Gallery image ${lightboxIdx + 1}`}
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    </div>
+
+                    <button 
+                      onClick={() => setLightboxIdx(prev => prev === getExtendedImages(selectedProperty).length - 1 ? 0 : prev + 1)}
+                      className="absolute right-4 z-10 p-3 rounded-full bg-black/60 hover:bg-black text-white border border-white/10 transition-all flex items-center justify-center cursor-pointer"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+
+                  {/* Lightbox Thumbnails */}
+                  <div className="flex justify-center gap-2 overflow-x-auto pb-4 max-w-2xl mx-auto scrollbar-none">
+                    {getExtendedImages(selectedProperty).map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setLightboxIdx(i)}
+                        className={`relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer ${
+                          i === lightboxIdx ? "border-primary scale-105" : "border-transparent opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <Image 
+                          src={img} 
+                          alt={`Thumbnail ${i + 1}`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Custom Toast Alert for sharing link */}
+            <AnimatePresence>
+              {showShareToast && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-primary text-white text-xs font-bold px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-2 border border-white/20"
+                >
+                  <CheckCircle size={16} />
+                  Link copied to clipboard!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Report Problem Modal Overlay */}
       {showReportModal && selectedProperty && (
-        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-gray-950 border border-white/10 p-6 md:p-8 rounded-3xl w-full max-w-md shadow-2xl relative space-y-5 animate-slide-up text-left">
+        <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-glass-bg border border-glass-border p-6 md:p-8 rounded-3xl w-full max-w-md shadow-2xl relative space-y-5 animate-slide-up text-left">
             <button 
               onClick={() => {
                 setShowReportModal(false);
                 setReportSuccessMsg("");
                 setReportErrorMsg("");
               }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
             >
               <X size={16} />
             </button>
 
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">Report Property Issue</h3>
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <h3 className="text-lg font-bold text-text-primary mb-1">Report Property Issue</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
                 Describe the problem you are facing with <strong>{selectedProperty.title}</strong>.
               </p>
             </div>
@@ -958,51 +1292,51 @@ function FindRoomsContent() {
 
                 {/* Issue Type */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Issue Category</label>
+                  <label className="text-xs font-semibold text-text-muted">Issue Category</label>
                   <select
                     value={reportIssueType}
                     onChange={(e) => setReportIssueType(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 cursor-pointer"
+                    className="w-full px-3 py-2.5 rounded-xl bg-card-bg border border-card-border text-text-primary text-xs focus:outline-none focus:border-primary/50 cursor-pointer"
                   >
-                    <option value="Maintenance" className="bg-gray-900 text-white">Maintenance (Water, Electricity, Plumbing)</option>
-                    <option value="Landlord Issue" className="bg-gray-900 text-white">Host / Landlord Behavior</option>
-                    <option value="Pricing/Payment" className="bg-gray-900 text-white">Billing or Price Dispute</option>
-                    <option value="Listing Info Inaccuracy" className="bg-gray-900 text-white">Inaccurate Listing Details</option>
-                    <option value="General Web Problem" className="bg-gray-900 text-white">General Website Bug</option>
-                    <option value="Other" className="bg-gray-900 text-white">Other Problem</option>
+                    <option value="Maintenance" className="bg-background text-text-primary">Maintenance (Water, Electricity, Plumbing)</option>
+                    <option value="Landlord Issue" className="bg-background text-text-primary">Host / Landlord Behavior</option>
+                    <option value="Pricing/Payment" className="bg-background text-text-primary">Billing or Price Dispute</option>
+                    <option value="Listing Info Inaccuracy" className="bg-background text-text-primary">Inaccurate Listing Details</option>
+                    <option value="General Web Problem" className="bg-background text-text-primary">General Website Bug</option>
+                    <option value="Other" className="bg-background text-text-primary">Other Problem</option>
                   </select>
                 </div>
 
                 {/* Title */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Title</label>
+                  <label className="text-xs font-semibold text-text-muted">Title</label>
                   <input
                     type="text"
                     required
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
                     placeholder="e.g., Water pressure is too low"
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50"
+                    className="w-full px-3 py-2.5 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Detailed Description</label>
+                  <label className="text-xs font-semibold text-text-muted">Detailed Description</label>
                   <textarea
                     required
                     rows={4}
                     value={reportDescription}
                     onChange={(e) => setReportDescription(e.target.value)}
                     placeholder="Provide details about the issue so the owner or administration can address it."
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 resize-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 text-xs focus:outline-none focus:border-primary/50 resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmittingReport}
-                  className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                  className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 animate-none cursor-pointer"
                 >
                   {isSubmittingReport ? "Submitting..." : "Submit Report"}
                 </button>

@@ -20,8 +20,6 @@ export const metadata: Metadata = {
   description: "Find and list rental property, land, anexxes and rooms across Sri Lanka. Connect with property owners and tenants easily.",
   icons: {
     icon: "/logo/logo.png",
-    shortcut: "/logo/logo.png",
-    apple: "/logo/logo.png",
   },
 };
 
