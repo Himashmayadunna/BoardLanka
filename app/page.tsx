@@ -16,7 +16,10 @@ import {
   Users, 
   ChevronLeft, 
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Building2,
+  Home as HomeIcon,
+  Compass
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
 
@@ -34,7 +37,7 @@ interface Property {
 }
 
 const cities = [
-  { name: "Colombo", count: "420+ Listings", search: "colombo", img: "https://images.unsplash.com/photo-1588598126743-4e3112c32cf9?w=600" },
+  { name: "Colombo", count: "420+ Listings", search: "colombo", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600" },
   { name: "Homagama", count: "180+ Listings", search: "homagama", img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600" },
   { name: "Biyagama", count: "90+ Listings", search: "biyagama", img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600" },
   { name: "Katunayaka", count: "120+ Listings", search: "katunayaka", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600" },
@@ -297,19 +300,53 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { title: "Annexes", desc: "For young couples & professionals", link: "/anexxes-rooms", icon: "🏠", color: "from-purple-500/10 to-pink-500/10" },
-              { title: "Houses", desc: "For families & sharing groups", link: "/property-land?type=house", icon: "🏰", color: "from-emerald-500/10 to-teal-500/10" },
-              { title: "Land / Plots", desc: "Build your customized home", link: "/property-land?type=land", icon: "🏔️", color: "from-orange-500/10 to-red-500/10" }
+              { 
+                title: "Annexes", 
+                desc: "For young couples & professionals", 
+                link: "/anexxes-rooms", 
+                icon: <Building2 className="w-6 h-6" />, 
+                themeClass: "from-purple-500/10 to-pink-500/10 hover:shadow-purple-500/5",
+                iconClass: "bg-purple-500/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white"
+              },
+              { 
+                title: "Houses", 
+                desc: "For families & sharing groups", 
+                link: "/property-land?type=house", 
+                icon: <HomeIcon className="w-6 h-6" />, 
+                themeClass: "from-emerald-500/10 to-teal-500/10 hover:shadow-emerald-500/5",
+                iconClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white"
+              },
+              { 
+                title: "Land / Plots", 
+                desc: "Build your customized home", 
+                link: "/property-land?type=land", 
+                icon: <Compass className="w-6 h-6" />, 
+                themeClass: "from-amber-500/10 to-orange-500/10 hover:shadow-amber-500/5",
+                iconClass: "bg-amber-500/10 text-amber-400 border-amber-500/20 group-hover:bg-amber-500 group-hover:text-white"
+              }
             ].map((cat, i) => (
               <Link 
                 key={i} 
                 href={cat.link}
-                className={`glass-card p-6 rounded-3xl text-left flex flex-col justify-between min-h-[180px] bg-gradient-to-br ${cat.color} group`}
+                className={`relative glass-card p-8 rounded-[2rem] text-left flex flex-col justify-between min-h-[220px] bg-gradient-to-br ${cat.themeClass} group border border-white/5 hover:border-primary/20 transition-all duration-300 hover:-translate-y-1 shadow-lg`}
               >
-                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
+                {/* Arrow indicator on hover */}
+                <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300 text-text-muted hover:text-primary">
+                  <ArrowRight size={18} className="-rotate-45" />
+                </div>
+
+                {/* Animated Icon wrapper */}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-300 ${cat.iconClass}`}>
+                  {cat.icon}
+                </div>
+
                 <div>
-                  <h3 className="text-lg font-bold text-text-primary mb-1.5 group-hover:text-primary transition-colors">{cat.title}</h3>
-                  <p className="text-xs text-text-muted">{cat.desc}</p>
+                  <h3 className="text-lg font-bold text-text-primary mb-1.5 group-hover:text-primary transition-colors">
+                    {cat.title}
+                  </h3>
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    {cat.desc}
+                  </p>
                 </div>
               </Link>
             ))}
