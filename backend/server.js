@@ -34,6 +34,7 @@ try {
   const authRoutes = require("./routes/authRoutes");
   const userRoutes = require("./routes/userRoutes");
   const problemRoutes = require("./routes/problemRoutes");
+  const contactRoutes = require("./routes/contactRoutes");
 
   console.log("✓ Routes loaded successfully");
   app.use("/api/properties", propertyRoutes);
@@ -44,6 +45,8 @@ try {
   console.log("✓ User routes registered at /api/users");
   app.use("/api/problems", problemRoutes);
   console.log("✓ Problem routes registered at /api/problems");
+  app.use("/api/contact", contactRoutes);
+  console.log("✓ Contact routes registered at /api/contact");
 } catch (err) {
   console.error("✗ Error loading routes:", err.message);
   console.error("Stack trace:", err.stack);
