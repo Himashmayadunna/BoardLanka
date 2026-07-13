@@ -52,6 +52,104 @@ router.post("/", verifyUser, async (req, res) => {
       return res.status(500).json({ message: error.message });
     }
 
+    // Send email using Resend API if API Key is available
+    if (process.env.RESEND_API_KEY) {
+      let sellerEmail = null;
+      let sellerName = "Host/Landlord";
+
+      if (propertyId) {
+        try {
+          const { data: property } = await supabase
+            .from("properties")
+            .select("seller_id")
+            .eq("id", propertyId)
+            .maybeSingle();
+
+          if (property && property.seller_id) {
+            const { data: sellerProfile } = await supabase
+              .from("profiles")
+              .select("first_name, last_name, email")
+              .eq("id", property.seller_id)
+              .maybeSingle();
+
+            if (sellerProfile) {
+              sellerEmail = sellerProfile.email;
+              sellerName = `${sellerProfile.first_name} ${sellerProfile.last_name}`;
+            }
+          }
+        } catch (dbErr) {
+          console.error("Failed to query seller details for email notification:", dbErr.message);
+        }
+      }
+
+      if (sellerEmail) {
+        try {
+          const emailBody = {
+            from: "BoardLanka <onboarding@resend.dev>",
+            to: "himashheshan193@gmail.com",
+            subject: `[BoardLanka] New Problem Report: ${title}`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-top: 0;">New Problem Reported</h2>
+                <p>Hello,</p>
+                <p>A new problem report has been submitted regarding a property listing.</p>
+                <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                  <p style="margin: 5px 0;"><strong>Property Listing:</strong> "${propertyTitle || 'Property Listing'}"</p>
+                  <p style="margin: 5px 0;"><strong>Issue Type:</strong> ${issueType}</p>
+                  <p style="margin: 5px 0;"><strong>Title:</strong> ${title}</p>
+                  <p style="margin: 5px 0;"><strong>Description:</strong></p>
+                  <p style="white-space: pre-wrap; margin: 5px 0; background: #fff; padding: 10px; border: 1px solid #e5e7eb; border-radius: 4px;">${description}</p>
+                </div>
+                <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin: 15px 0; font-size: 13px;">
+                  <strong>Development sandbox routing:</strong><br/>
+                  Original Intended Landlord: ${sellerName} (${sellerEmail})
+                </div>
+                <p>Please log in to the profile dashboard to view and manage this issue status.</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;"/>
+                <p style="font-size: 12px; color: #6b7280; text-align: center; margin-bottom: 0;">This is an automated notification from BoardLanka.</p>
+              </div>
+            `
+          };
+
+          if (typeof fetch === "function") {
+            const emailRes = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(emailBody)
+            });
+            const emailData = await emailRes.json();
+            console.log("✓ Resend email response:", emailData);
+          } else {
+            const https = require("https");
+            const payloadStr = JSON.stringify(emailBody);
+            const reqOpts = {
+              hostname: "api.resend.com",
+              path: "/emails",
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(payloadStr)
+              }
+            };
+            const emailReq = https.request(reqOpts, (emailRes) => {
+              let body = "";
+              emailRes.on("data", chunk => body += chunk);
+              emailRes.on("end", () => console.log("✓ Resend email (https fallback) response:", body));
+            });
+            emailReq.on("error", (err) => console.error("✗ Failed to send email via https fallback:", err));
+            emailReq.write(payloadStr);
+            emailReq.end();
+          }
+        } catch (emailErr) {
+          console.error("✗ Failed to send email notification:", emailErr.message);
+        }
+      }
+    }
+
     res.status(201).json({
       message: "Problem reported successfully",
       problem: data[0],
@@ -81,7 +179,7 @@ router.get("/", verifyUser, async (req, res) => {
       console.warn("Profiles check warning:", err.message);
     }
 
-    let query;
+    let resultData = [];
 
     if (accountType === "seller") {
       // Landlord: Fetch reports for their properties
@@ -103,11 +201,12 @@ router.get("/", verifyUser, async (req, res) => {
         return res.status(200).json([]);
       }
 
-      query = supabase
+      // Try fetching with the join first
+      let { data, error } = await supabase
         .from("property_problems")
         .select(`
           *,
-          profiles:user_id (
+          profiles (
             first_name,
             last_name,
             email,
@@ -117,13 +216,90 @@ router.get("/", verifyUser, async (req, res) => {
         .in("property_id", propertyIds)
         .order("created_at", { ascending: false });
 
+      if (error && error.message.includes("phone")) {
+        console.warn("phone column doesn't exist in profiles table, retrying join without phone");
+        const retryResult = await supabase
+          .from("property_problems")
+          .select(`
+            *,
+            profiles (
+              first_name,
+              last_name,
+              email
+            )
+          `)
+          .in("property_id", propertyIds)
+          .order("created_at", { ascending: false });
+        data = retryResult.data;
+        error = retryResult.error;
+      }
+
+      if (error) {
+        console.warn("Fetch reports with profiles join failed, falling back to manual merge:", error.message);
+        
+        // Fallback: Fetch problems without join
+        const { data: problemsData, error: problemsError } = await supabase
+          .from("property_problems")
+          .select("*")
+          .in("property_id", propertyIds)
+          .order("created_at", { ascending: false });
+
+        if (problemsError) {
+          console.error("Fetch reports fallback error:", problemsError);
+          return res.status(500).json({ message: problemsError.message });
+        }
+
+        if (problemsData && problemsData.length > 0) {
+          const userIds = [...new Set(problemsData.map(p => p.user_id))];
+          
+          // Fetch profiles for these users
+          let { data: profilesData, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, email, phone")
+            .in("id", userIds);
+
+          if (profilesError && profilesError.message.includes("phone")) {
+            console.warn("phone column doesn't exist in profiles table, retrying profiles fetch without phone");
+            const retryProfiles = await supabase
+              .from("profiles")
+              .select("id, first_name, last_name, email")
+              .in("id", userIds);
+            profilesData = retryProfiles.data;
+            profilesError = retryProfiles.error;
+          }
+
+          if (!profilesError && profilesData) {
+            const profilesMap = profilesData.reduce((acc, profile) => {
+              acc[profile.id] = profile;
+              return acc;
+            }, {});
+
+            resultData = problemsData.map(p => ({
+              ...p,
+              profiles: profilesMap[p.user_id] || null
+            }));
+          } else {
+            console.error("Fetch profiles fallback error:", profilesError ? profilesError.message : "No profiles found");
+            resultData = problemsData.map(p => ({
+              ...p,
+              profiles: null
+            }));
+          }
+        } else {
+          resultData = [];
+        }
+      } else {
+        resultData = data || [];
+      }
+
     } else {
       // Buyer/Renter: Fetch reports submitted by them
-      query = supabase
+      // Try fetching with the join first
+      const { data, error } = await supabase
         .from("property_problems")
         .select(`
           *,
-          properties:property_id (
+          properties (
             title,
             location,
             type,
@@ -132,16 +308,63 @@ router.get("/", verifyUser, async (req, res) => {
         `)
         .eq("user_id", req.user.id)
         .order("created_at", { ascending: false });
+
+      if (error) {
+        console.warn("Fetch reports with properties join failed, falling back to manual merge:", error.message);
+        
+        // Fallback: Fetch problems without join
+        const { data: problemsData, error: problemsError } = await supabase
+          .from("property_problems")
+          .select("*")
+          .eq("user_id", req.user.id)
+          .order("created_at", { ascending: false });
+
+        if (problemsError) {
+          console.error("Fetch reports fallback error:", problemsError);
+          return res.status(500).json({ message: problemsError.message });
+        }
+
+        if (problemsData && problemsData.length > 0) {
+          const propertyIds = [...new Set(problemsData.map(p => p.property_id).filter(Boolean))];
+          
+          if (propertyIds.length > 0) {
+            // Fetch properties
+            const { data: propertiesData, error: propertiesError } = await supabase
+              .from("properties")
+              .select("id, title, location, type, price")
+              .in("id", propertyIds);
+
+            if (!propertiesError && propertiesData) {
+              const propertiesMap = propertiesData.reduce((acc, prop) => {
+                acc[prop.id] = prop;
+                return acc;
+              }, {});
+
+              resultData = problemsData.map(p => ({
+                ...p,
+                properties: p.property_id ? (propertiesMap[p.property_id] || null) : null
+              }));
+            } else {
+              resultData = problemsData.map(p => ({
+                ...p,
+                properties: null
+              }));
+            }
+          } else {
+            resultData = problemsData.map(p => ({
+              ...p,
+              properties: null
+            }));
+          }
+        } else {
+          resultData = [];
+        }
+      } else {
+        resultData = data || [];
+      }
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Fetch reports error:", error);
-      return res.status(500).json({ message: error.message });
-    }
-
-    res.status(200).json(data || []);
+    res.status(200).json(resultData);
   } catch (error) {
     console.error("Fetch reports error:", error);
     res.status(500).json({ message: "Internal server error" });

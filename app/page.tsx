@@ -37,12 +37,12 @@ interface Property {
 }
 
 const cities = [
-  { name: "Colombo", count: "420+ Listings", search: "colombo", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600" },
-  { name: "Homagama", count: "180+ Listings", search: "homagama", img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600" },
-  { name: "Biyagama", count: "90+ Listings", search: "biyagama", img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600" },
-  { name: "Katunayaka", count: "120+ Listings", search: "katunayaka", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600" },
-  { name: "Galle", count: "150+ Listings", search: "galle", img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600" },
-  { name: "Jaffna", count: "65+ Listings", search: "jaffna", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600" },
+  { name: "Colombo", count: "420+ Listings", search: "colombo", img: "/colombo.webp" },
+  { name: "Homagama", count: "180+ Listings", search: "homagama", img: "/homagama.jpg" },
+  { name: "Biyagama", count: "90+ Listings", search: "biyagama", img: "/biyagama.webp" },
+  { name: "Katunayaka", count: "120+ Listings", search: "katunayaka", img: "/katunayaka.jpg" },
+  { name: "Galle", count: "150+ Listings", search: "galle", img: "/galle.webp" },
+  { name: "Jaffna", count: "65+ Listings", search: "jaffna", img: "/jaffna.jpg" },
 ];
 
 const testimonials = [

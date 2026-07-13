@@ -40,16 +40,47 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim() && email.trim() && message.trim()) {
-      setSubmitted(true);
-      setName("");
-      setEmail("");
-      setMessage("");
-      setTimeout(() => setSubmitted(false), 4000);
+    if (!name.trim() || !email.trim() || !message.trim()) return;
+
+    setIsSubmitting(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch(`${apiUrl}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      let data = null;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      }
+
+      if (res.ok) {
+        setSubmitted(true);
+        setName("");
+        setEmail("");
+        setMessage("");
+      } else {
+        setErrorMsg(data?.message || `Failed with status ${res.status}. Please restart your backend server.`);
+      }
+    } catch (err) {
+      console.error("Contact form error:", err);
+      setErrorMsg("An error occurred. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,11 +259,16 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {errorMsg && (
+                    <p className="text-red-500 text-xs text-left font-medium">{errorMsg}</p>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-1.5 mt-2"
+                    disabled={isSubmitting}
+                    className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span>Send Message</span>
+                    <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
                     <Send size={12} />
                   </button>
                 </form>
