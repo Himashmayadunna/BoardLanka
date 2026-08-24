@@ -20,6 +20,8 @@ import {
   ShieldCheck
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
+import { compressImage } from "@/lib/imageOptimizer";
+import { clearClientPropertyCache } from "@/lib/propertyService";
 
 interface FormData {
   title: string;
@@ -108,8 +110,8 @@ export default function AddPropertyPage() {
     }));
   };
 
-  // Convert files helper
-  const processFiles = (files: FileList) => {
+  // Convert & compress files helper
+  const processFiles = async (files: FileList) => {
     if (uploadedImages.length >= 5) {
       setMessage({ type: "error", text: "Maximum 5 images allowed" });
       return;
@@ -124,17 +126,26 @@ export default function AddPropertyPage() {
         continue;
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        setMessage({ type: "error", text: `Image ${file.name} exceeds the 2MB threshold.` });
-        continue;
+      try {
+        // Automatically compress image to high-efficiency ~60KB WebP
+        const compressedBase64 = await compressImage(file, {
+          maxWidth: 1280,
+          maxHeight: 960,
+          quality: 0.8,
+        });
+        setUploadedImages((prev) => {
+          if (prev.length >= 5) return prev;
+          return [...prev, compressedBase64];
+        });
+      } catch (err) {
+        console.warn("Failed to compress image, using fallback reader:", err);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          setUploadedImages((prev) => [...prev, result]);
+        };
+        reader.readAsDataURL(file);
       }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setUploadedImages((prev) => [...prev, result]);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -235,6 +246,9 @@ export default function AddPropertyPage() {
       const data = (await response.json()) as { message?: string; property?: any };
       if (!response.ok) throw new Error(data.message || "Failed to publish listing.");
 
+      // Invalidate client cache to ensure new listing appears instantly
+      clearClientPropertyCache();
+
       setMessage({ type: "success", text: "Property published successfully! Redirecting..." });
       setTimeout(() => {
         router.push("/my-listings");
@@ -256,8 +270,6 @@ export default function AddPropertyPage() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
-      <MeshBackground />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Back Link */}

@@ -4,8 +4,52 @@ const cors = require("cors");
 
 const app = express();
 const port = process.env.PORT || 5000;
+const zlib = require("zlib");
 
 app.use(cors());
+
+// High-speed response compression middleware using built-in zlib
+app.use((req, res, next) => {
+  const acceptEncoding = req.headers["accept-encoding"] || "";
+  const originalJson = res.json.bind(res);
+  const originalSend = res.send.bind(res);
+
+  const compressAndSend = (data, isJson = false) => {
+    const payload = isJson ? JSON.stringify(data) : data;
+    const buffer = Buffer.isBuffer(payload) ? payload : Buffer.from(payload || "", "utf-8");
+
+    // Only compress payloads larger than 1KB
+    if (buffer.length < 1024) {
+      if (isJson) res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return originalSend(buffer);
+    }
+
+    if (acceptEncoding.includes("gzip")) {
+      res.setHeader("Content-Encoding", "gzip");
+      if (isJson) res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.removeHeader("Content-Length");
+      zlib.gzip(buffer, (err, compressed) => {
+        if (err) return originalSend(buffer);
+        originalSend(compressed);
+      });
+    } else if (acceptEncoding.includes("deflate")) {
+      res.setHeader("Content-Encoding", "deflate");
+      if (isJson) res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.removeHeader("Content-Length");
+      zlib.deflate(buffer, (err, compressed) => {
+        if (err) return originalSend(buffer);
+        originalSend(compressed);
+      });
+    } else {
+      if (isJson) res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return originalSend(buffer);
+    }
+  };
+
+  res.json = (data) => compressAndSend(data, true);
+  next();
+});
+
 // Increase payload size limit to handle base64 images
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

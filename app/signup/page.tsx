@@ -186,8 +186,6 @@ export default function SignUpPage() {
 
   return (
     <div className="relative min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-background pt-16">
-      <MeshBackground />
-
       {/* Left side: 3D Animation View */}
       <div 
         ref={leftContainerRef}

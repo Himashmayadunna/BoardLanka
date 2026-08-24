@@ -127,8 +127,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
-      <MeshBackground />
-
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Back Link */}

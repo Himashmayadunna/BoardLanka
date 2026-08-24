@@ -122,6 +122,12 @@ CREATE POLICY "Users can update their own problems or landlord can update them" 
     )
   );
 
+CREATE INDEX IF NOT EXISTS idx_properties_seller_id ON public.properties(seller_id);
+CREATE INDEX IF NOT EXISTS idx_properties_area ON public.properties(area);
+CREATE INDEX IF NOT EXISTS idx_properties_type ON public.properties(type);
+CREATE INDEX IF NOT EXISTS idx_properties_available ON public.properties(available);
+CREATE INDEX IF NOT EXISTS idx_properties_feed ON public.properties(available, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_properties_type_feed ON public.properties(type, available, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_property_problems_user_id ON public.property_problems(user_id);
 CREATE INDEX IF NOT EXISTS idx_property_problems_property_id ON public.property_problems(property_id);
 

@@ -18,6 +18,8 @@ import {
   Compass
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
+import { getSellerProperties, getPropertyById, clearClientPropertyCache } from "@/lib/propertyService";
+import { PropertyGridSkeleton } from "@/app/components/PropertySkeleton";
 
 interface Property {
   id: string | number;
@@ -89,7 +91,8 @@ function MyListingsContent() {
   }, []);
 
   useEffect(() => {
-    if (!user?.seller_id && !user?.id) {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
       setLoading(false);
       return;
     }
@@ -98,37 +101,10 @@ function MyListingsContent() {
       try {
         setLoading(true);
         setError(null);
-
-        const token = localStorage.getItem("token");
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
-        const response = await fetch(`${apiUrl}/api/properties`, {
-          method: "GET",
-          headers,
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch listings.");
-        const data = await response.json();
-
-        let allProperties: Property[] = [];
-        if (Array.isArray(data)) {
-          allProperties = data;
-        } else if (data && typeof data === "object") {
-          const propertiesList = data.properties || data.data || [];
-          if (Array.isArray(propertiesList)) allProperties = propertiesList;
-        }
-
-        const sellerId = user.seller_id || user.id || "";
-        const sellerProperties = allProperties.filter(
-          (prop) =>
-            (sellerId && prop.seller?.id === sellerId) ||
-            (sellerId && prop.seller && typeof prop.seller === "object" && Object.values(prop.seller).includes(sellerId))
-        );
-
-        setProperties(sellerProperties);
+        const data = await getSellerProperties(token);
+        setProperties(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Error fetching properties:", err);
+        console.error("Error fetching seller properties:", err);
         setError(err instanceof Error ? err.message : "Failed to load listings.");
       } finally {
         setLoading(false);
@@ -136,22 +112,26 @@ function MyListingsContent() {
     };
 
     fetchSellerProperties();
-  }, [user, apiUrl]);
+  }, [user]);
 
-  // Fetch full details of a single property (with all images)
+  // Fetch full details of a single property (with all images, cached)
   const fetchSingleDetail = async (id: string | number) => {
     try {
       setLoadingDetail(true);
-      const res = await fetch(`${apiUrl}/api/properties/${id}`);
-      if (res.ok) {
-        const data = (await res.json()) as Property;
-        setSelectedProperty(data);
+      const data = await getPropertyById(id);
+      setSelectedProperty(data);
+      setCurrentImageIdx(0);
+      setActiveTab("details");
+      setShowContactDetails(false);
+    } catch (err) {
+      console.warn("Error loading property details from API, searching local data:", err);
+      const localProp = properties.find(p => String(p.id) === String(id));
+      if (localProp) {
+        setSelectedProperty(localProp);
         setCurrentImageIdx(0);
         setActiveTab("details");
         setShowContactDetails(false);
       }
-    } catch (err) {
-      console.error("Error loading property details:", err);
     } finally {
       setLoadingDetail(false);
     }
@@ -173,6 +153,7 @@ function MyListingsContent() {
 
       if (!response.ok) throw new Error("Failed to delete property.");
 
+      clearClientPropertyCache();
       setProperties(properties.filter((p) => p.id !== propertyId));
       setDeleteConfirm(null);
       setSelectedProperty(null);
@@ -227,8 +208,6 @@ function MyListingsContent() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
-      <MeshBackground />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Back Link */}
