@@ -3,6 +3,36 @@ const express = require("express");
 const router = express.Router();
 const supabase = require("../supabaseClient");
 
+// ==========================================
+// In-Memory Performance Cache (TTL 60s)
+// ==========================================
+const memoryCache = new Map();
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+const getCached = (key) => {
+  const item = memoryCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expiry) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return item.data;
+};
+
+const setCache = (key, data, ttl = CACHE_TTL_MS) => {
+  // Prevent memory unbounded growth
+  if (memoryCache.size > 500) {
+    const firstKey = memoryCache.keys().next().value;
+    if (firstKey) memoryCache.delete(firstKey);
+  }
+  memoryCache.set(key, { data, expiry: Date.now() + ttl });
+};
+
+const clearPropertyCache = () => {
+  memoryCache.clear();
+  console.log("🧹 Property cache invalidated");
+};
+
 // Middleware to verify token and get user
 const verifyUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -24,12 +54,87 @@ const verifyUser = async (req, res, next) => {
   }
 };
 
+// Helper: Transform DB property to API format
+const transformPropertySummary = (property) => ({
+  id: property.id,
+  seller_id: property.seller_id,
+  title: property.title,
+  location: property.location,
+  area: property.area,
+  type: property.type,
+  price: property.price,
+  advancePayment: property.advance_payment,
+  bedrooms: property.bedrooms,
+  bathrooms: property.bathrooms,
+  size: property.size,
+  description: property.description,
+  images: property.images && property.images.length > 0 ? [property.images[0]] : [], // Only return primary image for feeds to keep payload tiny
+  imageCount: property.images ? property.images.length : 0,
+  amenities: property.amenities || [],
+  seller: {
+    name: "Property Owner",
+    phone: property.phone,
+    whatsapp: property.whatsapp,
+    email: null,
+    verified: false,
+  },
+  available: property.available,
+  createdAt: property.created_at,
+});
+
+const transformPropertyDetail = (property) => ({
+  id: property.id,
+  seller_id: property.seller_id,
+  title: property.title,
+  location: property.location,
+  area: property.area,
+  type: property.type,
+  price: property.price,
+  advancePayment: property.advance_payment,
+  bedrooms: property.bedrooms,
+  bathrooms: property.bathrooms,
+  size: property.size,
+  description: property.description,
+  images: property.images || [], // Full array for detail modal
+  imageCount: property.images ? property.images.length : 0,
+  amenities: property.amenities || [],
+  seller: {
+    name: "Property Owner",
+    phone: property.phone,
+    whatsapp: property.whatsapp,
+    email: null,
+    verified: false,
+  },
+  available: property.available,
+  createdAt: property.created_at,
+});
+
+// GET /api/properties/my-listings - Get listings for the authenticated seller
+router.get("/my-listings", verifyUser, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("seller_id", req.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Fetch seller properties error:", error);
+      return res.status(500).json({ message: error.message });
+    }
+
+    const transformed = (data || []).map(transformPropertyDetail);
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.status(200).json(transformed);
+  } catch (error) {
+    console.error("Seller properties route error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // POST /api/properties - Add new property (sellers only)
 router.post("/", verifyUser, async (req, res) => {
   try {
-    console.log("📝 POST /api/properties called");
-    console.log("User ID:", req.user?.id);
-    
     const {
       title,
       location,
@@ -47,13 +152,8 @@ router.post("/", verifyUser, async (req, res) => {
       images,
     } = req.body;
 
-    console.log("Received data:", {
-      title, location, area, type, price, advancePayment, size, description
-    });
-
     // Validate required fields
     if (!title || !location || !area || !type || !price || !description || advancePayment === undefined || advancePayment === null || advancePayment === '') {
-      console.log("❌ Validation failed - missing required fields");
       return res.status(400).json({ message: "Missing required fields: title, location, area, type, price, description, and advancePayment are required" });
     }
 
@@ -71,11 +171,9 @@ router.post("/", verifyUser, async (req, res) => {
     }
 
     if (profile && profile.account_type !== "seller") {
-      console.log("❌ User is not a seller");
       return res.status(403).json({ message: "Only sellers can add properties" });
     }
 
-    console.log("📤 Inserting property into Supabase...");
     // Insert property
     const { data, error } = await supabase
       .from("properties")
@@ -106,7 +204,9 @@ router.post("/", verifyUser, async (req, res) => {
       return res.status(500).json({ message: error.message });
     }
 
-    console.log("✅ Property inserted successfully:", data[0]?.id);
+    // Bust in-memory cache
+    clearPropertyCache();
+
     res.status(201).json({
       message: "Property added successfully",
       property: data[0],
@@ -117,13 +217,18 @@ router.post("/", verifyUser, async (req, res) => {
   }
 });
 
-// GET /api/properties - Get all properties with filtering
+// GET /api/properties - Get all properties with filtering (Cached)
 router.get("/", async (req, res) => {
   try {
-    console.log("📍 GET /api/properties called");
-    console.log("Query params:", req.query);
-    
-    const { type, area, search } = req.query;
+    const { type, area, search, limit } = req.query;
+    const cacheKey = `properties_${type || 'all'}_${area || 'all'}_${search || 'all'}_${limit || 'all'}`;
+
+    const cachedData = getCached(cacheKey);
+    if (cachedData) {
+      res.setHeader("X-Cache", "HIT");
+      res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
+      return res.status(200).json(cachedData);
+    }
 
     let query = supabase
       .from("properties")
@@ -131,14 +236,11 @@ router.get("/", async (req, res) => {
       .eq("available", true)
       .order("created_at", { ascending: false });
 
-    // Apply type filter - handle comma-separated types
     if (type) {
       const types = type.toString().toLowerCase().split(',').map(t => t.trim());
-      console.log("📌 Filtering by types:", types);
       if (types.length === 1) {
         query = query.eq("type", types[0]);
       } else {
-        // For multiple types, use 'in' filter
         query = query.in("type", types);
       }
     }
@@ -147,7 +249,10 @@ router.get("/", async (req, res) => {
       query = query.eq("area", area.toLowerCase());
     }
 
-    console.log("🔍 Executing Supabase query...");
+    if (limit) {
+      query = query.limit(parseInt(limit) || 50);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -155,35 +260,13 @@ router.get("/", async (req, res) => {
       return res.status(500).json({ message: error.message });
     }
 
-    console.log("✅ Fetched properties:", data?.length || 0);
+    const transformedData = (data || []).map(transformPropertySummary);
 
-    // Transform data to match frontend expectations
-    const transformedData = (data || []).map((property) => ({
-      id: property.id,
-      title: property.title,
-      location: property.location,
-      area: property.area,
-      type: property.type,
-      price: property.price,
-      advancePayment: property.advance_payment,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      size: property.size,
-      description: property.description,
-      images: property.images && property.images.length > 0 ? [property.images[0]] : [], // Return only first image to reduce payload
-      imageCount: property.images ? property.images.length : 0,
-      amenities: property.amenities || [],
-      seller: {
-        name: "Property Owner",
-        phone: property.phone,
-        whatsapp: property.whatsapp,
-        email: null,
-        verified: false,
-      },
-      available: property.available,
-      createdAt: property.created_at,
-    }));
+    // Save in in-memory cache
+    setCache(cacheKey, transformedData);
 
+    res.setHeader("X-Cache", "MISS");
+    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
     res.status(200).json(transformedData);
   } catch (error) {
     console.error("Get properties error:", error);
@@ -191,10 +274,18 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/properties/:id - Get single property
+// GET /api/properties/:id - Get single property (Cached)
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const cacheKey = `property_detail_${id}`;
+
+    const cached = getCached(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+      return res.status(200).json(cached);
+    }
 
     const { data, error } = await supabase
       .from("properties")
@@ -206,31 +297,12 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "Property not found" });
     }
 
-    const transformedData = {
-      id: data.id,
-      title: data.title,
-      location: data.location,
-      area: data.area,
-      type: data.type,
-      price: data.price,
-      advancePayment: data.advance_payment,
-      bedrooms: data.bedrooms,
-      bathrooms: data.bathrooms,
-      size: data.size,
-      description: data.description,
-      images: data.images || [], // Return all images for single property view
-      amenities: data.amenities || [],
-      seller: {
-        name: "Property Owner",
-        phone: data.phone,
-        whatsapp: data.whatsapp,
-        email: null,
-        verified: false,
-      },
-      available: data.available,
-      createdAt: data.created_at,
-    };
+    const transformedData = transformPropertyDetail(data);
 
+    setCache(cacheKey, transformedData, 120 * 1000);
+
+    res.setHeader("X-Cache", "MISS");
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
     res.status(200).json(transformedData);
   } catch (error) {
     console.error("Get property error:", error);
@@ -269,6 +341,9 @@ router.put("/:id", verifyUser, async (req, res) => {
       return res.status(500).json({ message: error.message });
     }
 
+    // Invalidate cache
+    clearPropertyCache();
+
     res.status(200).json({
       message: "Property updated successfully",
       property: data[0],
@@ -304,6 +379,9 @@ router.delete("/:id", verifyUser, async (req, res) => {
     if (error) {
       return res.status(500).json({ message: error.message });
     }
+
+    // Invalidate cache
+    clearPropertyCache();
 
     res.status(200).json({ message: "Property deleted successfully" });
   } catch (error) {

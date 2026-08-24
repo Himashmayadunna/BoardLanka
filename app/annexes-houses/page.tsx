@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
 import { motion, AnimatePresence } from "framer-motion";
+import { getProperties, getPropertyById } from "@/lib/propertyService";
+import { PropertyGridSkeleton } from "@/app/components/PropertySkeleton";
 
 interface Property {
   id: string | number;
@@ -78,51 +80,6 @@ const priceRanges = [
   { min: 50000, max: Infinity, label: "Over Rs. 50K" },
 ];
 
-const mockAnnexesRooms: Property[] = [
-  {
-    id: 1,
-    title: "Premium Student Annex near Moratuwa University",
-    location: "Katubedda, Moratuwa",
-    price: 15000,
-    type: "annex",
-    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"],
-    bedrooms: 1,
-    bathrooms: 1,
-    seller: { verified: true, name: "Seller 1", phone: "0770000000", whatsapp: "0770000000", email: null },
-    amenities: [],
-    description: "Sample description",
-    available: true
-  },
-  {
-    id: 2,
-    title: "Cozy Single Annex in Homagama",
-    location: "Homagama, Colombo",
-    price: 22000,
-    type: "annex",
-    images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800"],
-    bedrooms: 1,
-    bathrooms: 1,
-    seller: { verified: true, name: "Seller 2", phone: "0770000001", whatsapp: "0770000001", email: null },
-    amenities: [],
-    description: "Sample description",
-    available: true
-  },
-  {
-    id: 3,
-    title: "Fully Furnished Studio Annex - Galle",
-    location: "Galle Fort, Galle",
-    price: 25000,
-    type: "annex",
-    images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"],
-    bedrooms: 1,
-    bathrooms: 1,
-    seller: { verified: false, name: "Seller 3", phone: "0770000002", whatsapp: "0770000002", email: null },
-    amenities: [],
-    description: "Sample description",
-    available: true
-  }
-];
-
 function AnnexesHousesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -152,46 +109,12 @@ function AnnexesHousesContent() {
   const [isScrolled, setIsScrolled] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Helper to dynamically extend image array with premium fallback images
+  // Return the property's real database images
   const getExtendedImages = (property: Property) => {
-    const baseImages = property.images || [];
-    if (baseImages.length >= 5) return baseImages;
-    
-    const fallbackHouses = [
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=80"
-    ];
-    
-    const fallbackLands = [
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80",
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80",
-      "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1200&q=80",
-      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80",
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80"
-    ];
-
-    const fallbackRooms = [
-      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&q=80",
-      "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&q=80",
-      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200&q=80",
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80"
-    ];
-
-    const pool = property.type === "land" ? fallbackLands : (property.type === "room" || property.type === "annex" ? fallbackRooms : fallbackHouses);
-    
-    const results = [...baseImages];
-    let poolIndex = 0;
-    while (results.length < 5 && poolIndex < pool.length) {
-      const img = pool[poolIndex++];
-      if (!results.includes(img)) {
-        results.push(img);
-      }
+    if (property.images && property.images.length > 0) {
+      return property.images;
     }
-    return results;
+    return ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200"];
   };
 
   const handleShare = () => {
@@ -252,25 +175,35 @@ function AnnexesHousesContent() {
     }
   }, []);
 
-  // Load properties
+  // Load properties with SWR caching (instant display from cache + background revalidation)
   useEffect(() => {
+    let isMounted = true;
     const fetchProperties = async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`${apiUrl}/api/properties?type=annex`);
-        if (!res.ok) throw new Error("Failed to fetch listings");
-        const data = await res.json();
-        setProperties(Array.isArray(data) ? data : []);
+        const { data, isFromCache } = await getProperties(
+          { type: "room,annex" },
+          (freshData) => {
+            if (isMounted) setProperties(freshData);
+          }
+        );
+        if (isMounted) {
+          setProperties(Array.isArray(data) ? data : []);
+          setLoading(false);
+        }
       } catch (err) {
-        console.warn("Failed to load properties from API. Using local mock data fallback.", err);
-        setProperties(mockAnnexesRooms);
-        setError(null);
-      } finally {
-        setLoading(false);
+        console.warn("Failed to load properties from database:", err);
+        if (isMounted) {
+          setProperties([]);
+          setError(null);
+          setLoading(false);
+        }
       }
     };
     fetchProperties();
-  }, [apiUrl]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Read URL query parameters (e.g. ?location=homagama&type=room&id=123)
   useEffect(() => {
@@ -302,20 +235,15 @@ function AnnexesHousesContent() {
     };
   }, [selectedProperty]);
 
-  // Fetch full details of a single property (with all images)
+  // Fetch full details of a single property (with all images, cached)
   const fetchSingleDetail = async (id: string | number) => {
     try {
       setLoadingDetail(true);
-      const res = await fetch(`${apiUrl}/api/properties/${id}`);
-      if (res.ok) {
-        const data = (await res.json()) as Property;
-        setSelectedProperty(data);
-        setCurrentImageIdx(0);
-        setActiveTab("details");
-        setShowContactDetails(false);
-      } else {
-        throw new Error("Failed to fetch details");
-      }
+      const data = await getPropertyById(id);
+      setSelectedProperty(data);
+      setCurrentImageIdx(0);
+      setActiveTab("details");
+      setShowContactDetails(false);
     } catch (err) {
       console.warn("Error loading property details from API, searching local data:", err);
       const localProp = properties.find(p => String(p.id) === String(id));
@@ -455,8 +383,6 @@ function AnnexesHousesContent() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
-      <MeshBackground />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Page Title */}
@@ -525,17 +451,8 @@ function AnnexesHousesContent() {
         </div>
 
         {/* Listings Grid */}
-        {loading ? (
-          <div className="grid md:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="glass-card rounded-3xl h-[400px] animate-pulse p-4 flex flex-col justify-between">
-                <div className="h-48 bg-white/5 rounded-2xl" />
-                <div className="h-6 bg-white/5 rounded w-3/4 my-2" />
-                <div className="h-4 bg-white/5 rounded w-1/2 mb-4" />
-                <div className="h-10 bg-white/5 rounded-xl w-full" />
-              </div>
-            ))}
-          </div>
+        {loading && properties.length === 0 ? (
+          <PropertyGridSkeleton count={6} />
         ) : filtered.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-8">
             {filtered.map((item, index) => (
@@ -549,9 +466,11 @@ function AnnexesHousesContent() {
                     src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
                     alt={item.title}
                     fill
-                    priority={index === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={index < 3}
+                    loading={index < 3 ? "eager" : "lazy"}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    unoptimized
+                    unoptimized={item.images?.[0]?.startsWith("data:")}
                   />
                   
                   {/* Badges */}

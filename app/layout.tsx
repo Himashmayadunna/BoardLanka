@@ -4,6 +4,8 @@ import "./globals.css";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import SmoothScroll from "@/app/components/SmoothScroll";
+import MeshBackground from "@/app/components/MeshBackground";
+import CustomCursor from "@/app/components/CustomCursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +33,16 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-primary/20 selection:text-primary`}
         suppressHydrationWarning
       >
+        <MeshBackground />
+        <CustomCursor />
         <SmoothScroll>
           <Navbar />
-          {children}
+          <main className="min-h-screen">
+            {children}
+          </main>
           <Footer />
         </SmoothScroll>
       </body>

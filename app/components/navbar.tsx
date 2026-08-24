@@ -178,9 +178,8 @@ function NavbarContent() {
             {/* Desktop Navigation Links */}
             <nav className="hidden lg:flex items-center space-x-1">
               {navItems.map((item) => {
-                const itemUrl = new URL(item.href, "http://localhost");
-                const itemPathname = itemUrl.pathname;
-                const itemType = itemUrl.searchParams.get("type");
+                const itemPathname = item.href.split("?")[0];
+                const itemType = item.href.includes("type=") ? item.href.split("type=")[1] : null;
                 const currentType = searchParams.get("type");
                 
                 const isActive = pathname === itemPathname && (!itemType || currentType === itemType);
@@ -189,6 +188,7 @@ function NavbarContent() {
                   <Link
                     key={item.label}
                     href={item.href}
+                    prefetch={true}
                     className="relative px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-300 text-text-muted hover:text-text-primary flex items-center justify-center"
                   >
                     {isActive && (
@@ -380,6 +380,7 @@ function NavbarContent() {
                       <Link
                         key={item.label}
                         href={item.href}
+                        prefetch={true}
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold text-text-muted hover:text-text-primary hover:bg-card-hover-bg active:bg-primary-glow/70 active:text-primary active:scale-[0.98] transition-all border border-transparent hover:border-glass-border/30 duration-200"
                       >
@@ -397,6 +398,7 @@ function NavbarContent() {
                       <>
                         <Link
                           href="/profile"
+                          prefetch={true}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card-bg hover:bg-card-hover-bg active:bg-card-hover-bg active:scale-95 text-text-primary text-xs font-semibold border border-card-border transition-all duration-200"
                         >
@@ -408,6 +410,7 @@ function NavbarContent() {
                         {user?.accountType === "seller" && (
                           <Link
                             href="/addproperty"
+                            prefetch={true}
                             onClick={() => setMobileMenuOpen(false)}
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover active:scale-95 shadow-md shadow-primary/10 transition-all duration-200"
                           >
@@ -427,6 +430,7 @@ function NavbarContent() {
                       <>
                         <Link
                           href="/signup"
+                          prefetch={true}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex-1 flex items-center justify-center py-3 rounded-xl bg-card-bg text-text-primary text-xs font-bold border border-card-border hover:bg-card-hover-bg active:bg-card-hover-bg active:scale-95 text-center transition-all duration-200"
                         >
@@ -434,6 +438,7 @@ function NavbarContent() {
                         </Link>
                         <Link
                           href="/signin"
+                          prefetch={true}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex-1 flex items-center justify-center py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover active:scale-95 text-center shadow-md shadow-primary/10 transition-all duration-200"
                         >

@@ -22,6 +22,8 @@ import {
   Compass
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
+import { getProperties } from "@/lib/propertyService";
+import { PropertyCardSkeleton } from "@/app/components/PropertySkeleton";
 
 interface Property {
   id: string | number;
@@ -66,42 +68,6 @@ const testimonials = [
   }
 ];
 
-const mockProperties: Property[] = [
-  {
-    id: "mock-1",
-    title: "Modern Annex near University of Moratuwa",
-    location: "Katubedda, Moratuwa",
-    price: 18000,
-    type: "annex",
-    images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"],
-    bedrooms: 1,
-    bathrooms: 1,
-    seller: { verified: true }
-  },
-  {
-    id: "mock-2",
-    title: "Luxury Sharing Room for Students - Homagama",
-    location: "Pitipana, Homagama",
-    price: 12000,
-    type: "room",
-    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"],
-    bedrooms: 2,
-    bathrooms: 1,
-    seller: { verified: true }
-  },
-  {
-    id: "mock-3",
-    title: "Premium 3-Bedroom Family House",
-    location: "Thalawathugoda, Colombo",
-    price: 75000,
-    type: "house",
-    images: ["https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800"],
-    bedrooms: 3,
-    bathrooms: 2,
-    seller: { verified: true }
-  }
-];
-
 export default function Home() {
   const router = useRouter();
   const [featured, setFeatured] = useState<Property[]>([]);
@@ -128,26 +94,30 @@ export default function Home() {
     }
   };
 
-  // Fetch properties from local API
+  // Fetch properties from database with SWR caching
   useEffect(() => {
+    let isMounted = true;
     const fetchFeatured = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
-        const res = await fetch(`${apiUrl}/api/properties`);
-        if (res.ok) {
-          const data = (await res.json()) as Property[];
-          setFeatured(data.slice(0, 3)); // show first 3 items
-        } else {
-          throw new Error("Failed to fetch properties from API");
+        const { data } = await getProperties({ limit: 6 }, (freshData) => {
+          if (isMounted) setFeatured(Array.isArray(freshData) ? freshData.slice(0, 3) : []);
+        });
+        if (isMounted) {
+          setFeatured(Array.isArray(data) ? data.slice(0, 3) : []);
+          setLoading(false);
         }
       } catch (err) {
-        console.warn("Failed to load featured properties from API. Using local mock data fallback.", err);
-        setFeatured(mockProperties);
-      } finally {
-        setLoading(false);
+        console.warn("Failed to load featured properties from database:", err);
+        if (isMounted) {
+          setFeatured([]);
+          setLoading(false);
+        }
       }
     };
     fetchFeatured();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const nextTestimonial = () => {
@@ -171,9 +141,6 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden pt-20">
-      
-      {/* Mesh glowing particle background */}
-      <MeshBackground />
 
       {/* Hero Section */}
       <section className="dark relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 md:py-24 lg:py-32">
@@ -376,17 +343,10 @@ export default function Home() {
             </Link>
           </div>
 
-          {loading ? (
+          {loading && featured.length === 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="glass rounded-3xl h-96 animate-pulse p-4 flex flex-col justify-between">
-                  <div className="h-48 bg-white/5 rounded-2xl" />
-                  <div className="space-y-3 py-4">
-                    <div className="h-6 bg-white/5 rounded w-2/3" />
-                    <div className="h-4 bg-white/5 rounded w-1/2" />
-                  </div>
-                  <div className="h-10 bg-white/5 rounded-xl w-full" />
-                </div>
+                <PropertyCardSkeleton key={i} />
               ))}
             </div>
           ) : featured.length > 0 ? (
@@ -402,8 +362,9 @@ export default function Home() {
                       src={item.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
                       alt={item.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      unoptimized
+                      unoptimized={item.images?.[0]?.startsWith("data:")}
                     />
                     {item.seller?.verified && (
                       <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">

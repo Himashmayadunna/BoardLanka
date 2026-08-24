@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import MeshBackground from "@/app/components/MeshBackground";
 import { motion, AnimatePresence } from "framer-motion";
+import { getProperties, getSellerProperties } from "@/lib/propertyService";
 
 interface UserData {
   id: string;
@@ -107,72 +108,8 @@ export default function ProfilePage() {
   // Status updating states
   const [updatingProblemId, setUpdatingProblemId] = useState<string | number | null>(null);
 
-  // Seeding states
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
-
-  const handleSeedData = async () => {
-    setIsSeeding(true);
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    try {
-      const res = await fetch(`${apiUrl}/api/problems/seed-dummy`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Demo dummy data seeded successfully! Go to favorites, hosted properties, and reports tabs to check.");
-        // Reload all data
-        loadFavorites();
-        loadProblems();
-        if (user?.accountType === "seller") {
-          loadOwnListings();
-        }
-      } else {
-        alert(data.message || "Failed to seed demo data");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error seeding data.");
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-  const handleClearData = async () => {
-    setIsClearing(true);
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    try {
-      const res = await fetch(`${apiUrl}/api/problems/clear-dummy`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Demo dummy data cleared successfully.");
-        // Reload all data
-        loadFavorites();
-        loadProblems();
-        if (user?.accountType === "seller") {
-          loadOwnListings();
-        }
-      } else {
-        alert(data.message || "Failed to clear demo data");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error clearing data.");
-    } finally {
-      setIsClearing(false);
-    }
-  };
 
   // Fetch profiles on mount
   useEffect(() => {
@@ -249,11 +186,10 @@ export default function ProfilePage() {
         return;
       }
 
-      // Fetch all properties and filter locally by favorite IDs
-      const res = await fetch(`${apiUrl}/api/properties`);
-      if (res.ok) {
-        const properties: Property[] = await res.json();
-        const filtered = properties.filter(p => favIds.includes(Number(p.id)));
+      // Fetch properties using fast SWR cache and filter locally
+      const { data } = await getProperties();
+      if (Array.isArray(data)) {
+        const filtered = data.filter(p => favIds.includes(Number(p.id)));
         setFavoritesList(filtered);
       }
     } catch (e) {
@@ -288,21 +224,11 @@ export default function ProfilePage() {
   const loadOwnListings = async () => {
     setLoadingListings(true);
     try {
-      // Landlords see their own properties. We'll fetch all properties and filter by seller ID
-      const res = await fetch(`${apiUrl}/api/properties`);
-      if (res.ok) {
-        const data: Property[] = await res.json();
-        // Since backend GET /api/properties has transformed details, we match landlord owned listings
-        // We fetch and check owned listings
-        const myProperties = data.filter((p: any) => {
-          // If seller details match landlord or if we have a way to match.
-          // Note: GET /api/properties transforms seller information but we can also match by telephone number or host name
-          // Since the database matches owner properties, we will retrieve properties from API
-          // Let's filter locally
-          return p.seller?.phone === user?.phone || p.seller?.phone === localStorage.getItem("phone");
-        });
-        setOwnListings(myProperties);
-      }
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) return;
+      // Query dedicated seller listings endpoint directly
+      const data = await getSellerProperties(token);
+      setOwnListings(Array.isArray(data) ? (data as any) : []);
     } catch (e) {
       console.error("Error loading landlord listings:", e);
     } finally {
@@ -459,8 +385,6 @@ export default function ProfilePage() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
-      <MeshBackground />
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Two-Column Grid Workspace */}
@@ -727,37 +651,6 @@ export default function ProfilePage() {
                             </div>
                           </div>
                         )}
-                      </div>
-                    </div>
-
-                    {/* Developer Seeding Actions */}
-                    <div className="glass p-6 rounded-3xl border border-white/10 text-left space-y-4 bg-gray-950/40">
-                      <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                          <h3 className="font-bold text-sm text-white flex items-center gap-2 pb-1">
-                            <TrendingUp size={14} className="text-primary" /> Demo Workspace Utility
-                          </h3>
-                          <p className="text-[10px] text-gray-500">Seed dummy data templates to verify favorites lists and maintenance ticket workflows.</p>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSeedData}
-                            disabled={isSeeding}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 border border-primary/25 hover:bg-primary text-primary hover:text-white text-[10px] font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                          >
-                            {isSeeding ? <RefreshCw size={10} className="animate-spin" /> : <Plus size={10} />}
-                            Seed Mock Data
-                          </button>
-                          <button
-                            onClick={handleClearData}
-                            disabled={isClearing}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-red-500/5 border border-red-500/25 hover:bg-red-500 text-red-400 hover:text-white text-[10px] font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                          >
-                            {isClearing ? <RefreshCw size={10} className="animate-spin" /> : <Trash2 size={10} />}
-                            Clear Mock Data
-                          </button>
-                        </div>
                       </div>
                     </div>
 

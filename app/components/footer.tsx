@@ -70,16 +70,16 @@ export default function Footer() {
             <h4 className="text-text-primary font-semibold text-sm tracking-wide uppercase">Quick Links</h4>
             <ul className="space-y-2.5 text-sm text-text-muted">
               <li>
-                <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                <Link href="/" prefetch={true} className="hover:text-primary transition-colors">Home</Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
+                <Link href="/about" prefetch={true} className="hover:text-primary transition-colors">About Us</Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
+                <Link href="/contact" prefetch={true} className="hover:text-primary transition-colors">Contact</Link>
               </li>
               <li>
-                <Link href="/profile" className="hover:text-primary transition-colors">Host Dashboard</Link>
+                <Link href="/profile" prefetch={true} className="hover:text-primary transition-colors">Host Dashboard</Link>
               </li>
             </ul>
           </div>
@@ -89,13 +89,13 @@ export default function Footer() {
             <h4 className="text-text-primary font-semibold text-sm tracking-wide uppercase">Categories</h4>
             <ul className="space-y-2.5 text-sm text-text-muted">
               <li>
-                <Link href="/anexxes-rooms" className="hover:text-primary transition-colors">Modern Annexes</Link>
+                <Link href="/anexxes-rooms" prefetch={true} className="hover:text-primary transition-colors">Modern Annexes</Link>
               </li>
               <li>
-                <Link href="/property-land?type=house" className="hover:text-primary transition-colors">Luxury Houses</Link>
+                <Link href="/property-land?type=house" prefetch={true} className="hover:text-primary transition-colors">Luxury Houses</Link>
               </li>
               <li>
-                <Link href="/property-land?type=land" className="hover:text-primary transition-colors">Lands & Plots</Link>
+                <Link href="/property-land?type=land" prefetch={true} className="hover:text-primary transition-colors">Lands & Plots</Link>
               </li>
             </ul>
           </div>
