@@ -5,33 +5,27 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  Send, 
   ChevronDown, 
   ChevronUp, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin,
-  MessageSquare
+  Check
 } from "lucide-react";
-import MeshBackground from "@/app/components/MeshBackground";
 
 const faqData = [
   {
-    question: "Is there a service charge for university students?",
-    answer: "No, BoardLanka is 100% free for students and tenants. We establish direct connection between you and the property host with zero brokerage commission."
+    question: "Is there a service charge for university students and tenants?",
+    answer: "No, BoardLanka is completely free for tenants and students. You connect directly with verified property hosts with zero agency commission."
   },
   {
-    question: "How does property verification work?",
-    answer: "Hosts are required to upload business registrations, electricity bills or national identification documents. Listings verified by our team feature the green verification badge."
+    question: "How does the Sri Lanka NIC property verification work?",
+    answer: "Hosts upload their national identity documents, deed references, or utility verification bills. Listings verified by our team display the verified host credential."
   },
   {
-    question: "How can I upgrade to a Host seller account?",
-    answer: "Navigate to your profile settings, click 'Edit Profile', switch your account type from Seeker to Host, and save changes. You will instantly unlock property listing forms."
+    question: "How do I list annexes and suites on BoardLanka?",
+    answer: "Create an account, choose Host / Landlord account type, and access your listing manager to configure property records, images, and publish verified rental listings."
   },
   {
-    question: "Can I manage listings after publishing?",
-    answer: "Yes, you can edit pricing, update images, flag availability toggles, or delete properties at any time via the 'My Listings' dashboard."
+    question: "Can I manage listings and agreements after publishing?",
+    answer: "Yes, you can edit pricing, update images, adjust availability status, or generate digital lease agreements anytime via your console."
   }
 ];
 
@@ -74,7 +68,7 @@ export default function ContactPage() {
         setEmail("");
         setMessage("");
       } else {
-        setErrorMsg(data?.message || `Failed with status ${res.status}. Please restart your backend server.`);
+        setErrorMsg(data?.message || `Failed with status ${res.status}.`);
       }
     } catch (err) {
       console.error("Contact form error:", err);
@@ -89,205 +83,166 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative min-h-screen pt-24 pb-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pt-28 pb-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-16">
         
-        {/* Title */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-glow border border-primary/20 text-xs font-semibold text-primary">
-            <Mail size={12} />
-            <span>Support Help Centre</span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white">Get in Touch with Us</h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-            Have questions about student rooms, hosting forms, or listings verification? We are here to help.
+        {/* Header */}
+        <div className="border-b border-[var(--border-hairline)] pb-12 space-y-3 max-w-3xl text-left">
+          <span className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--accent-earth)]">
+            Concierge & Support
+          </span>
+          <h1 className="font-serif text-4xl sm:text-6xl text-[var(--text-primary)] font-normal tracking-tight leading-[1.08]">
+            Get in touch with our team.
+          </h1>
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] font-light leading-relaxed">
+            Have questions regarding tenant verification, enterprise property setups, or campus partnerships? Send us a message.
           </p>
         </div>
 
-        {/* Form and Address row */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20">
+        {/* Form and Contact Info Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 text-left">
           
-          {/* Left Column: Office & FAQs */}
-          <div className="lg:col-span-6 space-y-8 text-left">
-            
-            {/* Info Cards */}
-            <div className="glass p-6 rounded-3xl border border-white/10 space-y-5 shadow-xl">
-              <h3 className="text-lg font-bold text-white mb-2">Central Headquarters</h3>
-              
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary-glow text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MapPin size={16} />
-                  </div>
+          {/* Left Column (5 cols): Contact Info */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8 space-y-6">
+              <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--accent-earth)]">
+                Colombo Headquarters
+              </span>
+
+              <div className="space-y-4 text-xs text-[var(--text-secondary)]">
+                <div className="flex items-start gap-3">
+                  <MapPin size={14} className="text-[var(--accent-earth)] shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-xs text-white uppercase tracking-wider">Office Address</h4>
-                    <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">Level 4, Colombo Innovation Centre, Colombo 03, Sri Lanka</p>
+                    <p className="font-medium text-[var(--text-primary)]">BoardLanka Operations</p>
+                    <p className="text-[var(--text-muted)] font-light">No. 42, High Level Road, Homagama & Colombo 07, Sri Lanka</p>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary-glow text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Phone size={16} />
-                  </div>
+                <div className="flex items-start gap-3">
+                  <Mail size={14} className="text-[var(--accent-earth)] shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-xs text-white uppercase tracking-wider">Direct Phone Support</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">+94 11 234 5678 (Mon - Fri, 9am - 5pm)</p>
+                    <p className="font-medium text-[var(--text-primary)]">Email Concierge</p>
+                    <p className="text-[var(--text-muted)] font-light">concierge@boardlanka.lk</p>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary-glow text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Mail size={16} />
-                  </div>
+                <div className="flex items-start gap-3">
+                  <Phone size={14} className="text-[var(--accent-earth)] shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-xs text-white uppercase tracking-wider">Email Inquiry</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">support@boardlanka.com</p>
+                    <p className="font-medium text-[var(--text-primary)]">Telephone / Hotline</p>
+                    <p className="text-[var(--text-muted)] font-light">+94 11 450 8900 (Mon–Sat, 8am–6pm)</p>
                   </div>
-                </div>
-              </div>
-
-              {/* Social Channels */}
-              <div className="border-t border-white/5 pt-4">
-                <p className="text-[10px] text-gray-500 font-semibold uppercase mb-3">Connect on Social Channels</p>
-                <div className="flex gap-2.5">
-                  {[
-                    { icon: <Facebook size={14} /> },
-                    { icon: <Twitter size={14} /> },
-                    { icon: <Instagram size={14} /> },
-                    { icon: <Linkedin size={14} /> }
-                  ].map((soc, i) => (
-                    <a 
-                      key={i} 
-                      href="#" 
-                      className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-primary/20 border border-white/5 transition-all"
-                    >
-                      {soc.icon}
-                    </a>
-                  ))}
                 </div>
               </div>
             </div>
 
-            {/* FAQ Accordion Accordion */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-1.5 pl-2">
-                <MessageSquare size={16} className="text-primary" />
-                Frequently Asked Questions
-              </h3>
-              
-              <div className="space-y-2.5">
-                {faqData.map((faq, idx) => {
-                  const isOpen = openFaqIdx === idx;
-                  return (
-                    <div 
-                      key={idx} 
-                      className="glass rounded-2xl border border-white/10 overflow-hidden shadow-md"
-                    >
-                      <button
-                        onClick={() => toggleFaq(idx)}
-                        className="w-full px-5 py-4 flex items-center justify-between text-left text-xs font-bold text-white hover:bg-white/5 transition-colors"
-                      >
-                        <span>{faq.question}</span>
-                        {isOpen ? <ChevronUp size={14} className="text-primary" /> : <ChevronDown size={14} />}
-                      </button>
-                      
-                      {isOpen && (
-                        <div className="px-5 pb-4 text-xs text-gray-400 leading-relaxed border-t border-white/5 pt-3 animate-slide-up">
-                          {faq.answer}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="p-6 border border-[var(--border-hairline)] bg-[var(--surface-subtle)] space-y-2">
+              <h4 className="font-serif text-lg text-[var(--text-primary)]">Enterprise Landlords & Agencies</h4>
+              <p className="text-xs text-[var(--text-muted)] font-light leading-relaxed">
+                Managing more than 20 units? We offer dedicated on-boarding assistance and customized invoice branding setups.
+              </p>
             </div>
-
           </div>
 
-          {/* Right Column: Contact Form */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="glass p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl">
-              <h3 className="text-lg font-bold text-white mb-4 text-left">Send a Direct Message</h3>
-              
-              {submitted ? (
-                <div className="text-center py-10 space-y-4 animate-fade-in">
-                  <div className="w-14 h-14 bg-primary-glow rounded-full flex items-center justify-center mx-auto text-primary border border-primary/20">
-                    <Send size={24} />
-                  </div>
-                  <h4 className="text-lg font-bold text-white">Message Sent!</h4>
-                  <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-                    Thank you for reaching out. A BoardLanka support agent will review your inquiry and get back to you shortly.
-                  </p>
+          {/* Right Column (7 cols): Underline Form */}
+          <div className="lg:col-span-7 border border-[var(--border-hairline)] bg-[var(--surface)] p-8 sm:p-10 space-y-6">
+            <h3 className="font-serif text-2xl text-[var(--text-primary)]">Send a Message</h3>
+
+            {submitted ? (
+              <div className="p-8 border border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-center space-y-3">
+                <div className="w-10 h-10 border border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+                  <Check size={20} />
                 </div>
-              ) : (
-                <form onSubmit={handleFormSubmit} className="space-y-4">
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-xs font-semibold text-gray-400">Your Full Name</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="John Doe"
-                      required
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                    />
-                  </div>
+                <h4 className="font-serif text-xl text-[var(--text-primary)]">Message Received</h4>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Thank you for reaching out. Our concierge team will respond within 24 hours.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                <div>
+                  <label className="label-floating">Your Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sunil Jayawardena"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="input-underline text-xs"
+                  />
+                </div>
 
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-xs font-semibold text-gray-400">Email Address</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="john@example.com"
-                      required
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="label-floating">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@domain.lk"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-underline text-xs"
+                  />
+                </div>
 
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-xs font-semibold text-gray-400">Message Description</label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={5}
-                      placeholder="How can we assist you? Describe your listing query or error state..."
-                      required
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all resize-none"
-                    />
-                  </div>
+                <div>
+                  <label className="label-floating">Message & Inquiries</label>
+                  <textarea
+                    rows={4}
+                    required
+                    placeholder="How can our team help you?"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="input-underline text-xs"
+                  />
+                </div>
 
-                  {errorMsg && (
-                    <p className="text-red-500 text-xs text-left font-medium">{errorMsg}</p>
-                  )}
+                {errorMsg && (
+                  <p className="text-xs text-rose-500 font-medium">{errorMsg}</p>
+                )}
 
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-editorial btn-editorial-primary py-3.5 px-7 text-xs font-semibold"
+                >
+                  {isSubmitting ? "Transmitting..." : "Send Message"}
+                </button>
+              </form>
+            )}
+          </div>
+
+        </div>
+
+        {/* FAQ Section with Hairline Accordion */}
+        <div className="border-t border-[var(--border-hairline)] pt-16 space-y-8 text-left max-w-3xl">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--accent-earth)]">
+              Frequently Asked Questions
+            </span>
+            <h2 className="font-serif text-3xl text-[var(--text-primary)]">Common Inquiries</h2>
+          </div>
+
+          <div className="border border-[var(--border-hairline)] bg-[var(--surface)] divide-y divide-[var(--border-hairline)]">
+            {faqData.map((faq, idx) => {
+              const isOpen = openFaqIdx === idx;
+              return (
+                <div key={idx} className="p-6 space-y-2">
                   <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => toggleFaq(idx)}
+                    className="w-full flex items-center justify-between text-left font-serif text-lg text-[var(--text-primary)] hover:text-[var(--accent-earth)] transition-colors cursor-pointer"
                   >
-                    <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
-                    <Send size={12} />
+                    <span>{faq.question}</span>
+                    <span className="text-xs text-[var(--text-muted)] font-sans">{isOpen ? "—" : "+"}</span>
                   </button>
-                </form>
-              )}
-            </div>
-
-            {/* Embedded Iframe Map */}
-            <div className="h-64 rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative bg-white/5">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.9782262174246!2d79.84931837494191!3d-6.8931908931060935!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25a50f14d84f9%3A0xe54d3f3f2d2fd39f!2sColombo%2003%2C%20Colombo!5e0!3m2!1sen!2slk!4v1700000000000!5m2!1sen!2slk"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                className="filter invert hue-rotate-180 opacity-75"
-              />
-            </div>
-
+                  {isOpen && (
+                    <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed pt-2">
+                      {faq.answer}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
-
         </div>
 
       </div>

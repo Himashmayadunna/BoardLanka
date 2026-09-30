@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, ArrowRight, Github, Twitter, Facebook, Instagram, Phone, Globe } from "lucide-react";
+import { ArrowRight, Phone, Mail, MapPin } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 export default function Footer() {
@@ -14,143 +14,170 @@ export default function Footer() {
     if (email.trim()) {
       setSubscribed(true);
       setEmail("");
-      setTimeout(() => setSubscribed(false), 3000);
+      setTimeout(() => setSubscribed(false), 3500);
     }
   };
 
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-card-border bg-background mt-20 overflow-hidden z-10">
-      
-      {/* Absolute Glow Layer */}
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary-glow rounded-full blur-3xl pointer-events-none z-0" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+    <footer className="relative border-t border-[var(--border-hairline)] bg-[var(--surface-subtle)] text-[var(--foreground)] mt-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20">
+        
+        {/* Main Editorial Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 pb-16 border-b border-[var(--border-hairline)]">
           
-          {/* Brand Col */}
-          <div className="lg:col-span-2 space-y-6">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="relative w-8 h-8 rounded-lg overflow-hidden group-hover:scale-105 transition-transform duration-300">
+          {/* Brand & Manifesto Column (5 cols) */}
+          <div className="md:col-span-5 space-y-6">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="relative w-8 h-8 rounded-[2px] overflow-hidden border border-[var(--border-hairline)] bg-white flex items-center justify-center">
                 <Image
                   src="/logo/logo.png"
-                  alt="BoardLanka logo"
+                  alt="BoardLanka"
                   fill
                   sizes="32px"
                   className="object-cover"
                   unoptimized
                 />
               </div>
-              <span className="text-text-primary font-bold text-lg tracking-tight">
-                Board<span className="text-primary">Lanka</span>
+              <span className="font-serif text-2xl tracking-tight text-[var(--text-primary)]">
+                Board<span className="italic font-light text-[var(--accent-earth)]">Lanka</span>
               </span>
             </Link>
-            <p className="text-sm text-text-muted max-w-sm leading-relaxed">
-              Redefining property discovery in Sri Lanka. Connecting university students, working professionals, and families with trusted boarding spaces, annexes, and premium homes.
+
+            <p className="font-serif italic text-base text-[var(--text-secondary)] leading-relaxed max-w-md">
+              &ldquo;Connecting Sri Lanka&apos;s finest residential properties, student boarding annexes, and holiday villas with trusted, direct host communication.&rdquo;
             </p>
-            <div className="space-y-2.5 text-xs text-text-muted">
-              <div className="flex items-center gap-2">
-                <Phone size={14} className="text-primary" />
-                <span>+94 11 234 5678</span>
+
+            <div className="space-y-2 pt-2 text-xs font-sans text-[var(--text-muted)]">
+              <div className="flex items-center gap-2.5">
+                <MapPin size={13} strokeWidth={1.5} className="text-[var(--accent-earth)]" />
+                <span>Colombo 07 & Homagama University Corridor, Sri Lanka</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail size={14} className="text-primary" />
-                <span>support@boardlanka.com</span>
+              <div className="flex items-center gap-2.5">
+                <Mail size={13} strokeWidth={1.5} className="text-[var(--accent-earth)]" />
+                <span>concierge@boardlanka.lk</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Globe size={14} className="text-primary" />
-                <span>Colombo, Sri Lanka</span>
+              <div className="flex items-center gap-2.5">
+                <Phone size={13} strokeWidth={1.5} className="text-[var(--accent-earth)]" />
+                <span>+94 11 450 8900 (Mon–Sat, 8am–6pm)</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Links Col */}
-          <div className="space-y-4">
-            <h4 className="text-text-primary font-semibold text-sm tracking-wide uppercase">Quick Links</h4>
-            <ul className="space-y-2.5 text-sm text-text-muted">
+          {/* Column 2: Residences & Directory (3 cols) */}
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--text-primary)]">
+              Residences
+            </h4>
+            <ul className="space-y-3 text-xs text-[var(--text-secondary)]">
               <li>
-                <Link href="/" prefetch={true} className="hover:text-primary transition-colors">Home</Link>
+                <Link href="/findrooms" className="hover:text-[var(--accent-earth)] transition-colors">
+                  All Residences
+                </Link>
               </li>
               <li>
-                <Link href="/about" prefetch={true} className="hover:text-primary transition-colors">About Us</Link>
+                <Link href="/findrooms?type=room" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Student Rooms
+                </Link>
               </li>
               <li>
-                <Link href="/contact" prefetch={true} className="hover:text-primary transition-colors">Contact</Link>
+                <Link href="/findrooms?type=annex" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Private Annexes
+                </Link>
               </li>
               <li>
-                <Link href="/profile" prefetch={true} className="hover:text-primary transition-colors">Host Dashboard</Link>
+                <Link href="/annexes-houses" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Houses & Villas
+                </Link>
+              </li>
+              <li>
+                <Link href="/findrooms?area=homagama" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Campus Corridor
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Categories Col */}
-          <div className="space-y-4">
-            <h4 className="text-text-primary font-semibold text-sm tracking-wide uppercase">Categories</h4>
-            <ul className="space-y-2.5 text-sm text-text-muted">
+          {/* Column 3: Host With Us (2 cols) */}
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--text-primary)]">
+              For Landlords
+            </h4>
+            <ul className="space-y-3 text-xs text-[var(--text-secondary)]">
               <li>
-                <Link href="/anexxes-rooms" prefetch={true} className="hover:text-primary transition-colors">Modern Annexes</Link>
+                <Link href="/addproperty" className="hover:text-[var(--accent-earth)] transition-colors">
+                  List a Residence
+                </Link>
               </li>
               <li>
-                <Link href="/property-land?type=house" prefetch={true} className="hover:text-primary transition-colors">Luxury Houses</Link>
+                <Link href="/profile" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Host Portfolio
+                </Link>
               </li>
               <li>
-                <Link href="/property-land?type=land" prefetch={true} className="hover:text-primary transition-colors">Lands & Plots</Link>
+                <Link href="/about" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Verification Standards
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-[var(--accent-earth)] transition-colors">
+                  Host Support
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Newsletter Col */}
-          <div className="space-y-4">
-            <h4 className="text-text-primary font-semibold text-sm tracking-wide uppercase">Newsletter</h4>
-            <p className="text-xs text-text-muted leading-relaxed">
-              Subscribe to receive weekly alerts for new rental listings and premium deals.
+          {/* Column 4: Gazette & Newsletter (3 cols) */}
+          <div className="md:col-span-3 space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--text-primary)]">
+              The Real Estate Gazette
+            </h4>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Curated monthly digest of Colombo rental trends, campus housing guides, and newly listed luxury villas.
             </p>
-            <form onSubmit={handleSubscribe} className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                required
-                className="w-full px-4 py-2.5 rounded-xl text-xs bg-card-bg border border-card-border text-text-primary placeholder-text-muted/60 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all pr-10"
-              />
-              <button 
-                type="submit"
-                className="absolute right-1 top-1 bottom-1 px-3 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary-hover transition-colors"
-              >
-                <ArrowRight size={14} />
-              </button>
+            <form onSubmit={handleSubscribe} className="space-y-2 pt-1">
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  required
+                  className="input-underline text-xs pr-8"
+                />
+                <button 
+                  type="submit"
+                  aria-label="Subscribe"
+                  className="absolute right-0 bottom-2 text-[var(--text-primary)] hover:text-[var(--accent-earth)] transition-colors cursor-pointer"
+                >
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+              {subscribed && (
+                <p className="text-[11px] text-[var(--accent-earth)] font-medium pt-1">
+                  ✓ You are subscribed to the Gazette.
+                </p>
+              )}
             </form>
-            {subscribed && (
-              <p className="text-xs text-primary font-medium animate-fade-in">
-                Thank you! You have subscribed successfully.
-              </p>
-            )}
           </div>
 
         </div>
 
-        {/* Bottom copyright & Socials */}
-        <div className="mt-16 pt-8 border-t border-card-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-text-muted text-center">
-            &copy; {currentYear} BoardLanka. All rights reserved. Designed for the futuristic 2026 rental ecosystem.
+        {/* Bottom Strip — Minimal Hairline */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
+          <p className="font-serif tracking-tight">
+            &copy; {currentYear} BoardLanka. Curated residential property marketplace.
           </p>
-          <div className="flex items-center space-x-4">
-            <a href="#" className="p-2 rounded-lg bg-card-bg border border-card-border text-text-muted hover:text-text-primary hover:bg-primary/20 transition-all">
-              <Twitter size={16} />
-            </a>
-            <a href="#" className="p-2 rounded-lg bg-card-bg border border-card-border text-text-muted hover:text-text-primary hover:bg-primary/20 transition-all">
-              <Instagram size={16} />
-            </a>
-            <a href="#" className="p-2 rounded-lg bg-card-bg border border-card-border text-text-muted hover:text-text-primary hover:bg-primary/20 transition-all">
-              <Facebook size={16} />
-            </a>
-            <a href="#" className="p-2 rounded-lg bg-card-bg border border-card-border text-text-muted hover:text-text-primary hover:bg-primary/20 transition-all">
-              <Github size={16} />
-            </a>
+
+          <div className="flex items-center space-x-6 text-[11px] uppercase tracking-[0.16em]">
+            <Link href="/about" className="hover:text-[var(--foreground)] transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-[var(--foreground)] transition-colors">Contact</Link>
+            <Link href="/findrooms" className="hover:text-[var(--foreground)] transition-colors">Residences</Link>
+            <Link href="/addproperty" className="hover:text-[var(--foreground)] transition-colors">Host</Link>
           </div>
         </div>
+
       </div>
     </footer>
   );

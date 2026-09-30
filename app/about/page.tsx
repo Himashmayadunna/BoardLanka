@@ -1,179 +1,119 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Sparkles, Target, Compass, Award, ShieldCheck, Users, HelpCircle, ArrowRight } from "lucide-react";
-import MeshBackground from "@/app/components/MeshBackground";
 import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, MapPin, Check, ShieldCheck, Compass } from "lucide-react";
 
 const stats = [
-  { value: "1,200+", label: "Active Listings", desc: "Across 10+ districts" },
-  { value: "5,000+", label: "Happy Tenants", desc: "Students & families" },
-  { value: "50+", label: "Cities Covered", desc: "All central campuses" },
-  { value: "100%", label: "Direct Contact", desc: "No middleman fees" },
-];
-
-const timeline = [
-  { year: "2024", title: "Project Launch", desc: "Founded to solve university student housing challenges in Colombo and Galle." },
-  { year: "2025", title: "1K Verified Listings", desc: "Upgraded our verification workflow and reached 1,000 active verified listing properties." },
-  { year: "2026", title: "Next-Gen Redesign", desc: "Redesigned as a modern startup experience with 3D elements and smooth scrolls." },
+  { value: "1,200+", label: "Verified Residences", desc: "Across 10+ districts" },
+  { value: "5,000+", label: "Residents Placed", desc: "Students & executives" },
+  { value: "50+", label: "University Zones", desc: "All major campus corridors" },
+  { value: "100%", label: "Direct Landlord Contact", desc: "Zero broker markups" },
 ];
 
 const team = [
-  { name: "Himash Mayadunna", role: "Founder & Lead Architect", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200" },
-  { name: "Dr. Asela Gunawardena", role: "Academic Advisor & Partner", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200" },
-  { name: "Shenal Perera", role: "Core UI/UX Developer", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200" },
+  { name: "Himash Mayadunna", role: "Founder & Product Architect", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300" },
+  { name: "Dr. Asela Gunawardena", role: "Operations & Academic Advisor", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300" },
+  { name: "Shenal Perera", role: "Design Systems & Engineering", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300" },
 ];
 
 export default function AboutPage() {
-  
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
-
-  const stagger = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
-  };
-
   return (
-    <div className="relative min-h-screen pt-24 pb-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pt-28 pb-24 space-y-20">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-16">
         
-        {/* Hero Section */}
-        <motion.div 
-          className="text-center max-w-3xl mx-auto mb-20 space-y-4"
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-        >
-          <motion.div 
-            variants={fadeInUp}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-glow border border-primary/20 text-xs font-semibold text-primary"
-          >
-            <Compass size={14} />
-            <span>Our Mission & Story</span>
-          </motion.div>
-          
-          <motion.h1 
-            variants={fadeInUp}
-            className="text-3xl md:text-5xl font-extrabold text-white"
-          >
-            Redefining Accommodation Discovery in <span className="text-primary">Sri Lanka</span>
-          </motion.h1>
-          
-          <motion.p 
-            variants={fadeInUp}
-            className="text-sm md:text-base text-gray-400 leading-relaxed"
-          >
-            We are building a premium property marketplace for university students, professionals, and families to discover trusted rental listings with zero intermediary brokerage.
-          </motion.p>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-24">
-          {stats.map((stat, idx) => (
-            <div key={idx} className="glass p-6 rounded-3xl border border-white/10 text-center space-y-2 shadow-xl">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-primary">{stat.value}</h3>
-              <div>
-                <p className="text-xs font-bold text-white">{stat.label}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{stat.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Vision & Mission Row */}
-        <div className="grid md:grid-cols-2 gap-8 mb-24">
-          
-          {/* Mission */}
-          <div className="glass-card p-8 rounded-3xl border border-white/10 text-left space-y-4 flex flex-col justify-between min-h-[220px]">
-            <div className="w-12 h-12 bg-primary-glow rounded-2xl flex items-center justify-center text-primary shadow-inner">
-              <Target size={22} />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white">Our Mission</h3>
-              <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
-                To simplify the local boarding process for students and families by offering a transparent, zero-commission rental platform that bridges the gap between hosts and tenants seamlessly.
-              </p>
-            </div>
-          </div>
-
-          {/* Vision */}
-          <div className="glass-card p-8 rounded-3xl border border-white/10 text-left space-y-4 flex flex-col justify-between min-h-[220px]">
-            <div className="w-12 h-12 bg-primary-glow rounded-2xl flex items-center justify-center text-primary shadow-inner">
-              <Sparkles size={22} />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white">Our Vision</h3>
-              <p className="text-xs md:text-sm text-gray-400 leading-relaxed">
-                To become the largest, most secure residential boarding engine in South Asia, powering verified virtual property walk-throughs and secure digital agreements.
-              </p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Timeline milestones */}
-        <div className="mb-24 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-12">Company Milestone Timeline</h2>
-          <div className="relative max-w-4xl mx-auto">
-            {/* Timeline Line */}
-            <div className="hidden md:block absolute top-[28px] inset-x-20 h-px bg-white/10" />
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              {timeline.map((item, idx) => (
-                <div key={idx} className="space-y-3.5 text-left bg-white/5 border border-white/10 p-6 rounded-3xl relative z-10 shadow-xl">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-secondary text-white font-extrabold text-sm flex items-center justify-center shadow-lg">
-                    {item.year}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-sm">{item.title}</h3>
-                    <p className="text-xs text-gray-400 leading-relaxed mt-1">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Team Cards */}
-        <div className="mb-20 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Meet the Team</h2>
-          <p className="text-xs md:text-sm text-gray-400 max-w-md mx-auto mb-12">
-            The visionary engineers and designers crafting the future of boarding search systems.
+        {/* Editorial Section Header */}
+        <div className="border-b border-[var(--border-hairline)] pb-12 space-y-4 max-w-3xl text-left">
+          <span className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--accent-earth)]">
+            Our Manifesto & Story
+          </span>
+          <h1 className="font-serif text-4xl sm:text-6xl text-[var(--text-primary)] font-normal tracking-tight leading-[1.08]">
+            Curating residential living in <span className="italic font-light text-[var(--accent-earth)]">Sri Lanka.</span>
+          </h1>
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] font-light leading-relaxed pt-2">
+            BoardLanka was founded to replace chaotic roadside paper posters and predatory broker commissions with a calm, verified property ecosystem.
           </p>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {team.map((member, idx) => (
-              <div key={idx} className="glass p-6 rounded-3xl border border-white/10 text-center space-y-4 shadow-xl">
-                <div className="relative w-20 h-20 rounded-full overflow-hidden border border-white/10 mx-auto">
-                  <img src={member.avatar} alt={member.name} className="object-cover w-full h-full" />
+        </div>
+
+        {/* Stats Strip */}
+        <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-hairline)] text-center">
+            {stats.map((s, idx) => (
+              <div key={idx} className="p-4 space-y-1">
+                <span className="stat-strip-numeral text-3xl sm:text-4xl text-[var(--text-primary)]">{s.value}</span>
+                <p className="stat-strip-label">{s.label}</p>
+                <p className="text-[11px] text-[var(--text-light)]">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mission & Vision (Hairline Grid) */}
+        <div className="grid md:grid-cols-2 gap-8 text-left">
+          <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8 space-y-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--accent-earth)]">
+              The Purpose
+            </span>
+            <h3 className="font-serif text-2xl text-[var(--text-primary)]">Zero Agency Friction</h3>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light leading-relaxed">
+              Every student moving near NSBM or Moratuwa, and every doctor shifting to Colombo hospitals, deserves direct NIC-verified host contacts, authentic specs, and digital lease security.
+            </p>
+          </div>
+
+          <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8 space-y-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--accent-sand)]">
+              The Infrastructure
+            </span>
+            <h3 className="font-serif text-2xl text-[var(--text-primary)]">Complete Operations Software</h3>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light leading-relaxed">
+              We empower landlords with enterprise-grade tenancy management — rent ledger tracking, branded PDF invoicing, and repair logistics without complicated spreadsheets.
+            </p>
+          </div>
+        </div>
+
+        {/* Editorial Team Strip */}
+        <div className="border-t border-[var(--border-hairline)] pt-16 space-y-8 text-left">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase tracking-[0.24em] font-semibold text-[var(--accent-earth)]">
+              Leadership
+            </span>
+            <h2 className="font-serif text-3xl text-[var(--text-primary)]">The Founding Team</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {team.map((m, idx) => (
+              <div key={idx} className="border border-[var(--border-hairline)] bg-[var(--surface)] p-6 space-y-4">
+                <div className="relative h-48 w-full overflow-hidden bg-[var(--surface-subtle)]">
+                  <Image
+                    src={m.avatar}
+                    alt={m.name}
+                    fill
+                    sizes="33vw"
+                    className="object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-white">{member.name}</h4>
-                  <p className="text-[10px] text-gray-500 font-semibold uppercase mt-0.5">{member.role}</p>
+                  <h3 className="font-serif text-lg text-[var(--text-primary)]">{m.name}</h3>
+                  <p className="text-xs text-[var(--text-muted)] font-light mt-0.5">{m.role}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="glass p-8 rounded-3xl border border-white/10 text-center max-w-3xl mx-auto space-y-6 shadow-2xl">
-          <h3 className="text-xl md:text-2xl font-bold text-white">Join the BoardLanka Ecosystem</h3>
-          <p className="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
-            Ready to list your student boarding rooms or explore premium annexes? Create a free account today.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link 
-              href="/signup" 
-              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5"
-            >
-              Get Started Free
-              <ArrowRight size={14} />
-            </Link>
+        {/* Bottom Contact CTA */}
+        <div className="border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-10 flex flex-col md:flex-row items-center justify-between gap-6 text-left">
+          <div className="space-y-1">
+            <h3 className="font-serif text-2xl text-[var(--text-primary)]">Have a partnership or campus inquiry?</h3>
+            <p className="text-xs text-[var(--text-muted)]">Connect with our Colombo concierge team directly.</p>
           </div>
+          <Link
+            href="/contact"
+            className="btn-editorial btn-editorial-primary py-3 px-6 text-xs font-semibold shrink-0"
+          >
+            <span>Contact Concierge</span>
+            <ArrowRight size={13} />
+          </Link>
         </div>
 
       </div>
