@@ -17,6 +17,38 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/:path*",
+        destination: "/my-listings",
+        permanent: false,
+      },
+      {
+        source: "/dashboard",
+        destination: "/my-listings",
+        permanent: false,
+      },
+      {
+        source: "/property-land",
+        destination: "/findrooms",
+        permanent: true,
+      },
+      {
+        source: "/anexxes-rooms",
+        destination: "/annexes-houses",
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/_/backend/:path*",
+        destination: "http://localhost:5000/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

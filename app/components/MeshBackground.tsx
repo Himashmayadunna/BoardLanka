@@ -81,8 +81,8 @@ export default function MeshBackground() {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fillStyle = p.isCyan
-            ? `rgba(20, 184, 166, ${p.opacity})`
-            : `rgba(16, 185, 129, ${p.opacity})`;
+            ? `rgba(184, 93, 59, ${p.opacity * 0.5})`
+            : `rgba(203, 181, 147, ${p.opacity * 0.4})`;
           ctx.fill();
         }
       }

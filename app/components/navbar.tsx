@@ -3,16 +3,19 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   Sun, 
   Moon, 
   Search, 
   Bell, 
-  PlusCircle, 
   Menu, 
   X, 
-  LogOut
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+  Building,
+  Plus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,32 +31,27 @@ function NavbarContent() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  // Handle scroll class toggle
+  // Scroll detection for navbar background transition
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Keyboard shortcut listener
+  // Keyboard shortcut listener for quick search (Cmd+K / Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
       }
@@ -67,9 +65,8 @@ function NavbarContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Sync authentication and dark mode states
+  // Initialize and synchronize auth and theme state
   useEffect(() => {
-    // 1. Session Auth
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     const userData = localStorage.getItem("user");
     
@@ -79,19 +76,23 @@ function NavbarContent() {
         try {
           setUser(JSON.parse(userData));
         } catch {
-          // Invalid user data
+          // Ignore invalid JSON
         }
       }
     }
 
-    // 2. Theme Preferences
     const theme = localStorage.getItem("theme");
-    if (theme === "light") {
-      setIsDarkMode(false);
-      document.documentElement.classList.add("light");
-    } else {
+    const isDark = theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
       setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      document.documentElement.setAttribute("data-theme", "light");
     }
   }, []);
 
@@ -99,11 +100,15 @@ function NavbarContent() {
     if (isDarkMode) {
       setIsDarkMode(false);
       localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
+      document.documentElement.setAttribute("data-theme", "light");
     } else {
       setIsDarkMode(true);
       localStorage.setItem("theme", "dark");
+      document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
+      document.documentElement.setAttribute("data-theme", "dark");
     }
   };
 
@@ -121,403 +126,448 @@ function NavbarContent() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/property-land?search=${encodeURIComponent(searchQuery)}`);
+      router.push(`/findrooms?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery("");
     }
   };
 
   const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Annexes", href: "/anexxes-rooms" },
-    { label: "Houses", href: "/property-land?type=house" },
-    { label: "Lands", href: "/property-land?type=land" },
+    { label: "Residences", href: "/findrooms" },
+    { label: "Houses & Villas", href: "/annexes-houses" },
+    { label: "List a Property", href: "/addproperty" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];
 
+  // Whether navbar is currently sitting over a full-bleed dark hero image (at top of Home page)
+  const isOverDarkHero = pathname === "/" && !isScrolled;
+
   return (
     <>
-      {/* Mobile Drawer Backdrop */}
+      {/* Mobile Backdrop Overlay */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
+      {/* Boutique Editorial Navigation Bar */}
       <header 
-        className={`fixed top-4 inset-x-4 max-w-7xl mx-auto z-50 transition-all duration-300 rounded-[1.25rem] border ${
-          mobileMenuOpen
-            ? "bg-glass-bg border-glass-border shadow-2xl py-4"
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+          isOverDarkHero
+            ? "bg-gradient-to-b from-black/85 via-black/45 to-transparent border-b border-white/10 py-5"
             : isScrolled
-              ? "bg-glass-bg border-glass-border shadow-xl shadow-black/5 py-2.5" 
-              : "bg-transparent border-transparent py-4"
+            ? "bg-[var(--background)]/95 backdrop-blur-md border-b border-[var(--border-hairline)] shadow-[0_1px_0_0_rgba(0,0,0,0.03)] py-4"
+            : "bg-[var(--background)]/95 backdrop-blur-md border-b border-[var(--border-hairline)] py-5"
         }`}
       >
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            
-            {/* Logo Section */}
-            <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-                <Image
-                  src="/logo/logo.png"
-                  alt="BoardLanka logo"
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-              <span className="text-text-primary font-bold text-base sm:text-xl tracking-tight block">
-                Board<span className="text-primary">Lanka</span>
-              </span>
-            </Link>
-
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const itemPathname = item.href.split("?")[0];
-                const itemType = item.href.includes("type=") ? item.href.split("type=")[1] : null;
-                const currentType = searchParams.get("type");
-                
-                const isActive = pathname === itemPathname && (!itemType || currentType === itemType);
-                
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    prefetch={true}
-                    className="relative px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-300 text-text-muted hover:text-text-primary flex items-center justify-center"
-                  >
-                    {isActive && (
-                      <motion.span
-                        layoutId="activeNavBackground"
-                        className="absolute inset-0 bg-primary-glow rounded-xl z-0"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className={`relative z-10 ${isActive ? "text-primary font-semibold" : ""}`}>
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Right Action Icons & Auth */}
-            <div className="flex items-center space-x-2.5">
-              
-              {/* Sleek Search Pill Trigger (Desktop) */}
-              <div className="hidden md:block">
-                <div 
-                  onClick={() => setSearchOpen(true)}
-                  className="flex items-center gap-2 bg-card-bg/60 border border-card-border/60 hover:border-primary/45 rounded-xl px-3 py-1.5 text-text-muted hover:text-text-primary transition-all duration-300 cursor-pointer text-xs font-medium"
-                >
-                  <Search size={14} className="text-text-muted/70" />
-                  <span>Search locations...</span>
-                  <span className="text-[9px] bg-card-hover-bg border border-card-border/50 rounded px-1.5 py-0.5 ml-1">⌘K</span>
-                </div>
-              </div>
-
-              {/* Search Icon Trigger (Mobile) */}
-              <button 
-                onClick={() => setSearchOpen(true)}
-                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors md:hidden"
-                title="Search Properties"
-              >
-                <Search size={18} />
-              </button>
-
-              {/* Notification Trigger */}
-              <div className="relative">
-                <button 
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors relative"
-                  title="Notifications"
-                >
-                  <Bell size={18} />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
-                </button>
-                <AnimatePresence>
-                  {notificationsOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2.5 w-72 rounded-xl border border-glass-border bg-glass-bg backdrop-blur-xl p-4 shadow-xl text-left z-50"
-                    >
-                      <h4 className="font-semibold text-text-primary text-sm border-b border-glass-border pb-2 mb-2">Notifications</h4>
-                      <div className="space-y-2 text-xs text-text-muted">
-                        <div className="p-2 rounded hover:bg-card-hover-bg cursor-pointer">
-                          <p className="text-text-primary font-medium">Welcome to BoardLanka!</p>
-                          <p className="mt-0.5">Start exploring premium rooms and houses.</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Dark Mode Toggle */}
-              <button 
-                onClick={toggleTheme}
-                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
-                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-
-              {/* Vertical Divider */}
-              <span className="h-5 w-px bg-card-border hidden md:block" />
-
-              {/* Become a Host & User Profile Actions */}
-              <div className="hidden md:flex items-center space-x-2">
-                {isLoggedIn ? (
-                  <>
-                    {/* User Profile Dropdown */}
-                    <div className="relative">
-                      <button 
-                        onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                        className="flex items-center gap-2 bg-card-bg hover:bg-card-hover-bg px-3.5 py-1.5 rounded-xl border border-card-border text-xs font-semibold text-text-primary transition-all cursor-pointer"
-                      >
-                        <div className="w-6 h-6 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">
-                          {user?.firstName?.charAt(0) || "U"}
-                        </div>
-                        <span>{user?.firstName || "Profile"}</span>
-                      </button>
-                      
-                      <AnimatePresence>
-                        {profileDropdownOpen && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 mt-2.5 w-48 rounded-xl border border-glass-border bg-glass-bg backdrop-blur-xl p-2 shadow-xl text-left space-y-0.5 z-50"
-                          >
-                            <Link 
-                              href="/profile" 
-                              onClick={() => setProfileDropdownOpen(false)}
-                              className="block px-3 py-2.5 rounded-lg text-xs text-text-primary hover:bg-card-hover-bg hover:text-primary transition-all font-medium"
-                            >
-                              My Dashboard
-                            </Link>
-                            {user?.accountType === "seller" && (
-                              <Link 
-                                href="/addproperty" 
-                                onClick={() => setProfileDropdownOpen(false)}
-                                className="block px-3 py-2.5 rounded-lg text-xs text-text-primary hover:bg-card-hover-bg hover:text-primary transition-all font-medium"
-                              >
-                                Add Property
-                              </Link>
-                            )}
-                            <Link 
-                              href="/profile/edit" 
-                              onClick={() => setProfileDropdownOpen(false)}
-                              className="block px-3 py-2.5 rounded-lg text-xs text-text-primary hover:bg-card-hover-bg hover:text-primary transition-all font-medium"
-                            >
-                              Edit Settings
-                            </Link>
-                            <hr className="border-glass-border my-1" />
-                            <button 
-                              onClick={handleSignOut}
-                              className="flex items-center gap-1.5 w-full text-left px-3 py-2.5 rounded-lg text-xs text-red-500 hover:bg-red-500/10 transition-all cursor-pointer font-medium"
-                            >
-                              <LogOut size={12} />
-                              <span>Sign Out</span>
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/signup"
-                      className="text-text-muted hover:text-text-primary hover:bg-card-hover-bg px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
-                    >
-                      Become a Host
-                    </Link>
-                    <Link
-                      href="/signin"
-                      className="bg-text-primary text-background hover:opacity-90 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-md shadow-card-border"
-                    >
-                      Sign In
-                    </Link>
-                  </>
-                )}
-              </div>
-
-              {/* Mobile Menu Icon Toggle */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-card-hover-bg transition-colors"
-              >
-                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex items-center justify-between gap-6">
+          
+          {/* Brand Logo & Editorial Wordmark */}
+          <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+            <div className={`relative w-7 h-7 overflow-hidden rounded-[2px] flex items-center justify-center transition-colors ${
+              isOverDarkHero 
+                ? "border border-white/20 bg-white/10" 
+                : "border border-[var(--border-hairline)] bg-[var(--surface)]"
+            }`}>
+              <Image
+                src="/logo/logo.png"
+                alt="BoardLanka"
+                fill
+                sizes="28px"
+                className="object-cover"
+                unoptimized
+              />
             </div>
-          </div>
+            <div className="flex flex-col">
+              <span className={`font-serif text-lg tracking-tight font-medium leading-tight ${
+                isOverDarkHero ? "text-white" : "text-[var(--foreground)]"
+              }`}>
+                Board<span className={`italic font-light ${
+                  isOverDarkHero ? "text-[#DEC29B]" : "text-[var(--accent-earth)]"
+                }`}>Lanka</span>
+              </span>
+              <span className={`text-[9px] uppercase tracking-[0.24em] font-sans -mt-0.5 hidden sm:block ${
+                isOverDarkHero ? "text-white/70" : "text-[var(--text-muted)]"
+              }`}>
+                Curated Marketplace
+              </span>
+            </div>
+          </Link>
 
-          {/* Mobile Glass Menu inside Capsule Container */}
-          <AnimatePresence>
-            {mobileMenuOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="overflow-hidden lg:hidden"
+          {/* Desktop Navigation Links — Small, Uppercase, Wide Tracking */}
+          <nav className="hidden lg:flex items-center space-x-7">
+            {navItems.map((item) => {
+              const itemPathname = item.href.split("?")[0];
+              const isActive = pathname === itemPathname;
+              
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  prefetch={true}
+                  className={`group relative text-[11px] uppercase tracking-[0.2em] font-medium transition-colors py-1 ${
+                    isOverDarkHero
+                      ? isActive
+                        ? "text-white font-semibold"
+                        : "text-white/80 hover:text-white"
+                      : isActive 
+                        ? "text-[var(--foreground)] font-semibold" 
+                        : "text-[var(--text-secondary)] hover:text-[var(--foreground)]"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {/* Subtle hairline hover underline */}
+                  <span 
+                    className={`absolute left-0 bottom-0 w-full h-[1px] transition-transform duration-300 origin-left ${
+                      isOverDarkHero ? "bg-[#DEC29B]" : "bg-[var(--accent-earth)]"
+                    } ${
+                      isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Controls: Search, Theme Switcher, Notifications & Auth */}
+          <div className="flex items-center space-x-3.5">
+            
+            {/* Minimal Search Button */}
+            <button 
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className={`flex items-center gap-2 transition-colors cursor-pointer p-1.5 border rounded-[2px] ${
+                isOverDarkHero
+                  ? "text-white/80 hover:text-white border-transparent hover:border-white/20"
+                  : "text-[var(--text-secondary)] hover:text-[var(--foreground)] border-transparent hover:border-[var(--border-hairline)]"
+              }`}
+              title="Search residences (Cmd+K)"
+            >
+              <Search size={15} strokeWidth={1.5} />
+              <span className="text-[11px] uppercase tracking-[0.16em] hidden md:inline-block font-medium">
+                Search
+              </span>
+            </button>
+
+            {/* Notifications Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => {
+                  setNotificationsOpen(!notificationsOpen);
+                  setProfileDropdownOpen(false);
+                }}
+                className={`transition-colors relative cursor-pointer p-1.5 border rounded-[2px] ${
+                  isOverDarkHero
+                    ? "text-white/80 hover:text-white border-transparent hover:border-white/20"
+                    : "text-[var(--text-secondary)] hover:text-[var(--foreground)] border-transparent hover:border-[var(--border-hairline)]"
+                }`}
+                title="Notifications"
               >
-                <div className="pt-6 pb-2 space-y-4 border-t border-glass-border/60 mt-4">
-                  {/* Mobile Navigation Links */}
-                  <div className="flex flex-col space-y-1">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        prefetch={true}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold text-text-muted hover:text-text-primary hover:bg-card-hover-bg active:bg-primary-glow/70 active:text-primary active:scale-[0.98] transition-all border border-transparent hover:border-glass-border/30 duration-200"
+                <Bell size={15} strokeWidth={1.5} />
+                <span className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${
+                  isOverDarkHero ? "bg-[#DEC29B]" : "bg-[var(--accent-earth)]"
+                }`} />
+              </button>
+              
+              <AnimatePresence>
+                {notificationsOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-3 w-80 border border-[var(--border-hairline)] bg-[var(--surface)] p-4 shadow-xl text-left z-50 rounded-[2px]"
+                  >
+                    <div className="flex items-center justify-between border-b border-[var(--border-hairline)] pb-2.5 mb-2.5">
+                      <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--text-primary)]">
+                        Notifications
+                      </h4>
+                      <span className="text-[9px] uppercase tracking-wider text-[var(--accent-earth)] font-semibold">
+                        1 Recent
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 border border-[var(--border-hairline)] bg-[var(--surface-subtle)]">
+                        <p className="font-serif text-sm text-[var(--text-primary)] font-medium">Welcome to BoardLanka</p>
+                        <p className="text-[var(--text-muted)] text-[11px] mt-1 leading-relaxed">
+                          Discover curated residential rentals across Colombo, Homagama, Galle, and university corridors.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Dark/Light Mode Theme Switcher */}
+            <button 
+              onClick={toggleTheme}
+              className={`transition-colors cursor-pointer p-1.5 border rounded-[2px] ${
+                isOverDarkHero
+                  ? "text-white/80 hover:text-white border-transparent hover:border-white/20"
+                  : "text-[var(--text-secondary)] hover:text-[var(--foreground)] border-transparent hover:border-[var(--border-hairline)]"
+              }`}
+              title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
+              aria-label="Toggle Theme"
+            >
+              {isDarkMode ? (
+                <Sun size={15} strokeWidth={1.5} className={isOverDarkHero ? "text-[#DEC29B]" : "text-[var(--accent-sand)]"} />
+              ) : (
+                <Moon size={15} strokeWidth={1.5} />
+              )}
+            </button>
+
+            {/* Thin Hairline Divider */}
+            <div className={`h-4 w-px hidden sm:block ${
+              isOverDarkHero ? "bg-white/20" : "bg-[var(--border-hairline)]"
+            }`} />
+
+            {/* Auth / Profile CTA */}
+            <div className="hidden sm:flex items-center space-x-3">
+              {isLoggedIn ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => {
+                      setProfileDropdownOpen(!profileDropdownOpen);
+                      setNotificationsOpen(false);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] font-medium transition-colors cursor-pointer rounded-[2px] border ${
+                      isOverDarkHero
+                        ? "border-white/20 text-white bg-white/10 hover:border-white/40"
+                        : "border-[var(--border-hairline)] hover:border-[var(--foreground)] text-[var(--foreground)] bg-[var(--surface)]"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${
+                      isOverDarkHero ? "bg-[#DEC29B]" : "bg-[var(--accent-earth)]"
+                    }`} />
+                    <span>{user?.firstName || "Account"}</span>
+                    <ChevronDown size={12} strokeWidth={1.5} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {profileDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-52 border border-[var(--border-hairline)] bg-[var(--surface)] p-2 shadow-xl text-left space-y-1 z-50 rounded-[2px]"
                       >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="h-px bg-glass-border/60 my-2" />
-
-                  {/* Mobile Auth Bottom Section */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    {isLoggedIn ? (
-                      <>
-                        <Link
-                          href="/profile"
-                          prefetch={true}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card-bg hover:bg-card-hover-bg active:bg-card-hover-bg active:scale-95 text-text-primary text-xs font-semibold border border-card-border transition-all duration-200"
+                        <Link 
+                          href="/profile" 
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] transition-colors"
                         >
-                          <div className="w-5 h-5 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center text-[9px] font-bold text-white uppercase shadow-sm">
-                            {user?.firstName?.charAt(0) || "U"}
-                          </div>
-                          <span>My Dashboard</span>
+                          <LayoutDashboard size={13} strokeWidth={1.5} />
+                          <span>My Portfolio</span>
                         </Link>
                         {user?.accountType === "seller" && (
-                          <Link
-                            href="/addproperty"
-                            prefetch={true}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover active:scale-95 shadow-md shadow-primary/10 transition-all duration-200"
-                          >
-                            <PlusCircle size={14} />
-                            Add Property
-                          </Link>
+                          <>
+                            <Link 
+                              href="/my-listings" 
+                              onClick={() => setProfileDropdownOpen(false)}
+                              className="flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] transition-colors"
+                            >
+                              <Building size={13} strokeWidth={1.5} />
+                              <span>My Listings</span>
+                            </Link>
+                            <Link 
+                              href="/addproperty" 
+                              onClick={() => setProfileDropdownOpen(false)}
+                              className="flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] transition-colors"
+                            >
+                              <Plus size={13} strokeWidth={1.5} />
+                              <span>List Residence</span>
+                            </Link>
+                          </>
                         )}
-                        <button
+                        <div className="h-px bg-[var(--border-hairline)] my-1" />
+                        <button 
                           onClick={handleSignOut}
-                          className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white active:scale-95 text-xs font-bold border border-red-500/25 transition-all duration-200"
+                          className="flex items-center gap-2 w-full text-left px-3 py-2 text-[11px] uppercase tracking-wider text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                         >
-                          <LogOut size={14} />
-                          Sign Out
+                          <LogOut size={13} strokeWidth={1.5} />
+                          <span>Sign Out</span>
                         </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href="/signup"
-                          prefetch={true}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex-1 flex items-center justify-center py-3 rounded-xl bg-card-bg text-text-primary text-xs font-bold border border-card-border hover:bg-card-hover-bg active:bg-card-hover-bg active:scale-95 text-center transition-all duration-200"
-                        >
-                          Become a Host
-                        </Link>
-                        <Link
-                          href="/signin"
-                          prefetch={true}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex-1 flex items-center justify-center py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover active:scale-95 text-center shadow-md shadow-primary/10 transition-all duration-200"
-                        >
-                          Sign In
-                        </Link>
-                      </>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href="/signin"
+                    className={`px-3.5 py-1.5 text-[11px] uppercase tracking-[0.18em] font-medium transition-colors ${
+                      isOverDarkHero 
+                        ? "text-white/90 hover:text-white" 
+                        : "text-[var(--text-primary)] hover:text-[var(--accent-earth)]"
+                    }`}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/addproperty"
+                    className="btn-editorial btn-editorial-primary text-[11px] py-2 px-4 shadow-sm"
+                  >
+                    List Property
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`lg:hidden p-1.5 cursor-pointer ${
+                isOverDarkHero ? "text-white" : "text-[var(--foreground)]"
+              }`}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+            </button>
+
+          </div>
         </div>
+
+        {/* Mobile Expanded Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden lg:hidden bg-[var(--background)] border-t border-[var(--border-hairline)] mt-3"
+            >
+              <div className="px-6 py-5 space-y-4">
+                
+                {/* Mobile Navigation Links */}
+                <div className="flex flex-col space-y-2">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      prefetch={true}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-xs uppercase tracking-[0.2em] font-medium text-[var(--text-secondary)] hover:text-[var(--foreground)] py-2 border-b border-[var(--border-hairline)] flex items-center justify-between"
+                    >
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Mobile Auth & Action Links */}
+                <div className="pt-2 flex flex-col gap-2">
+                  {isLoggedIn ? (
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        href="/profile"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="w-full text-center py-2.5 text-[11px] uppercase tracking-[0.18em] font-medium border border-[var(--border-hairline)] text-[var(--foreground)] bg-[var(--surface)]"
+                      >
+                        My Portfolio
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-center py-2.5 text-[11px] uppercase tracking-[0.18em] font-medium text-rose-600 border border-rose-500/30 bg-rose-500/5 cursor-pointer"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href="/signin"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-center py-2.5 text-[11px] uppercase tracking-[0.18em] font-medium border border-[var(--border-hairline)] text-[var(--foreground)] bg-[var(--surface)]"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/addproperty"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="btn-editorial btn-editorial-primary text-center py-2.5 text-[11px] uppercase tracking-[0.18em] font-semibold"
+                      >
+                        List Property
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </header>
 
-      {/* Global Overlay Search Modal */}
+      {/* Global Quick Search Overlay */}
       <AnimatePresence>
         {searchOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4 sm:px-6"
-          >
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
-              onClick={() => setSearchOpen(false)}
-            />
-            {/* Modal Box */}
-            <motion.div 
-              initial={{ scale: 0.95, y: -20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.95, y: -20, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-xl bg-glass-bg border border-glass-border rounded-3xl p-5 shadow-2xl backdrop-blur-2xl space-y-4 text-left"
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.18 }}
+              className="w-full max-w-2xl bg-[var(--surface)] border border-[var(--border-hairline)] rounded-[2px] shadow-2xl overflow-hidden p-6 space-y-4 text-left"
             >
-              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                <Search size={18} className="absolute left-4 text-text-muted" />
+              <div className="flex items-center justify-between border-b border-[var(--border-hairline)] pb-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">
+                  Quick Property Search
+                </span>
+                <button 
+                  onClick={() => setSearchOpen(false)}
+                  className="text-[var(--text-muted)] hover:text-[var(--foreground)] cursor-pointer"
+                >
+                  <X size={16} strokeWidth={1.5} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSearchSubmit} className="relative">
                 <input
                   type="text"
+                  autoFocus
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Where would you like to board? (e.g. Homagama, Colombo)"
-                  className="w-full pl-12 pr-12 py-3 rounded-2xl bg-card-bg text-text-primary placeholder-text-muted/60 border border-card-border focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary-glow text-sm transition-all text-text-primary"
-                  autoFocus
+                  placeholder="Enter location, property type, or university area..."
+                  className="input-underline text-base font-serif italic placeholder:font-sans placeholder:not-italic"
                 />
                 <button 
-                  type="button" 
-                  onClick={() => setSearchOpen(false)}
-                  className="absolute right-4 text-xs font-semibold text-text-muted hover:text-text-primary bg-card-hover-bg border border-card-border/60 rounded-md px-1.5 py-0.5 cursor-pointer"
+                  type="submit"
+                  className="absolute right-0 bottom-2 text-xs uppercase tracking-[0.18em] font-semibold text-[var(--accent-earth)] hover:underline cursor-pointer"
                 >
-                  ESC
+                  Search →
                 </button>
               </form>
-              <div className="text-xs text-text-muted space-y-2">
-                <p className="font-semibold text-text-primary">Popular Districts / Universities</p>
+
+              <div className="pt-2">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-light)] mb-2 font-medium">
+                  Popular Regions
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {["Homagama", "Colombo", "Galle", "Kandy", "Moratuwa", "Kelaniya"].map((loc) => (
+                  {["Homagama", "Colombo 07", "Katunayake", "Galle", "NSBM Campus", "Moratuwa"].map((tag) => (
                     <button
-                      key={loc}
+                      key={tag}
                       type="button"
                       onClick={() => {
-                        setSearchQuery(loc);
-                        router.push(`/property-land?search=${encodeURIComponent(loc)}`);
+                        setSearchQuery(tag);
+                        router.push(`/findrooms?search=${encodeURIComponent(tag)}`);
                         setSearchOpen(false);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-card-bg border border-card-border hover:bg-primary-glow hover:border-primary/30 hover:text-primary transition-all cursor-pointer font-medium text-text-primary"
+                      className="text-[11px] tracking-wider px-2.5 py-1 border border-[var(--border-hairline)] text-[var(--text-secondary)] hover:border-[var(--foreground)] hover:text-[var(--foreground)] transition-colors rounded-[2px] cursor-pointer bg-[var(--surface-subtle)]"
                     >
-                      {loc}
+                      {tag}
                     </button>
                   ))}
                 </div>
               </div>
+
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
@@ -526,13 +576,7 @@ function NavbarContent() {
 
 export default function Navbar() {
   return (
-    <Suspense fallback={
-      <header className="fixed top-4 inset-x-4 max-w-7xl mx-auto z-50 bg-transparent py-4 border border-transparent">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-10" />
-        </div>
-      </header>
-    }>
+    <Suspense fallback={<div className="h-16" />}>
       <NavbarContent />
     </Suspense>
   );

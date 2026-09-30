@@ -17,9 +17,9 @@ import {
   Trash2,
   Sparkles,
   Eye,
-  ShieldCheck
+  ShieldCheck,
+  Plus
 } from "lucide-react";
-import MeshBackground from "@/app/components/MeshBackground";
 import { compressImage } from "@/lib/imageOptimizer";
 import { clearClientPropertyCache } from "@/lib/propertyService";
 
@@ -67,8 +67,8 @@ export default function AddPropertyPage() {
   });
 
   const amenitiesOptions = [
-    "WiFi", "AC", "Parking", "Gym", "Pool", "Garden",
-    "Kitchen", "Hot Water", "24/7 Security", "Balcony", "Study Area", "Laundry"
+    "WiFi", "Air Conditioning", "Dedicated Parking", "Fitness Center", "Swimming Pool", "Private Garden",
+    "Equipped Kitchen", "Hot Water", "24/7 Security", "Balcony Terrace", "Study Nook", "Laundry"
   ];
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function AddPropertyPage() {
       if (userData.accountType !== "seller") {
         setMessage({
           type: "error",
-          text: "Only hosts can list properties. Navigate to Profile settings to upgrade your account type.",
+          text: "Only landlord/host accounts can list properties. Visit Profile settings to update your role.",
         });
       }
       setIsLoggedIn(true);
@@ -110,10 +110,9 @@ export default function AddPropertyPage() {
     }));
   };
 
-  // Convert & compress files helper
   const processFiles = async (files: FileList) => {
     if (uploadedImages.length >= 5) {
-      setMessage({ type: "error", text: "Maximum 5 images allowed" });
+      setMessage({ type: "error", text: "Maximum 5 images permitted per listing." });
       return;
     }
 
@@ -122,12 +121,11 @@ export default function AddPropertyPage() {
       if (uploadedImages.length >= 5) break;
 
       if (!file.type.startsWith("image/")) {
-        setMessage({ type: "error", text: "Only image files are allowed." });
+        setMessage({ type: "error", text: "Please supply standard image files only." });
         continue;
       }
 
       try {
-        // Automatically compress image to high-efficiency ~60KB WebP
         const compressedBase64 = await compressImage(file, {
           maxWidth: 1280,
           maxHeight: 960,
@@ -138,7 +136,7 @@ export default function AddPropertyPage() {
           return [...prev, compressedBase64];
         });
       } catch (err) {
-        console.warn("Failed to compress image, using fallback reader:", err);
+        console.warn("Compression fallback:", err);
         const reader = new FileReader();
         reader.onload = (event) => {
           const result = event.target?.result as string;
@@ -153,7 +151,6 @@ export default function AddPropertyPage() {
     if (e.target.files) processFiles(e.target.files);
   };
 
-  // Drag & drop handlers
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -180,27 +177,27 @@ export default function AddPropertyPage() {
   const validateStep = () => {
     if (step === 1) {
       if (!formData.title || !formData.description || !formData.location) {
-        setMessage({ type: "error", text: "Please complete all fields before moving on." });
+        setMessage({ type: "error", text: "Please complete all mandatory fields." });
         return false;
       }
     }
     if (step === 2) {
       if (formData.type !== "land" && (!formData.bedrooms || !formData.bathrooms || !formData.size)) {
-        setMessage({ type: "error", text: "Please enter bedroom, bathroom and size properties." });
+        setMessage({ type: "error", text: "Please define bedrooms, bathrooms, and floor area." });
         return false;
       }
       if (formData.type === "land" && !formData.size) {
-        setMessage({ type: "error", text: "Please enter the plot land size." });
+        setMessage({ type: "error", text: "Please enter the plot extent." });
         return false;
       }
     }
     if (step === 3) {
       if (formData.price <= 0 || !formData.phone) {
-        setMessage({ type: "error", text: "Rent pricing and contact details are required." });
+        setMessage({ type: "error", text: "Monthly rate and phone contact are required." });
         return false;
       }
       if (uploadedImages.length === 0) {
-        setMessage({ type: "error", text: "Please upload at least one property image." });
+        setMessage({ type: "error", text: "Please upload at least one photograph." });
         return false;
       }
     }
@@ -220,7 +217,7 @@ export default function AddPropertyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (accountType !== "seller") {
-      setMessage({ type: "error", text: "Only seller accounts can publish properties." });
+      setMessage({ type: "error", text: "Only seller/landlord accounts may publish listings." });
       return;
     }
 
@@ -229,7 +226,7 @@ export default function AddPropertyPage() {
 
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) throw new Error("Missing authentication token.");
+      if (!token) throw new Error("Missing authentication credentials.");
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/_/backend";
       const payload = { ...formData, images: uploadedImages };
@@ -244,15 +241,14 @@ export default function AddPropertyPage() {
       });
 
       const data = (await response.json()) as { message?: string; property?: any };
-      if (!response.ok) throw new Error(data.message || "Failed to publish listing.");
+      if (!response.ok) throw new Error(data.message || "Failed to publish property.");
 
-      // Invalidate client cache to ensure new listing appears instantly
       clearClientPropertyCache();
 
-      setMessage({ type: "success", text: "Property published successfully! Redirecting..." });
+      setMessage({ type: "success", text: "Listing published successfully. Redirecting..." });
       setTimeout(() => {
         router.push("/my-listings");
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       setMessage({ type: "error", text: err.message || "Publishing failed. Please try again." });
@@ -262,471 +258,474 @@ export default function AddPropertyPage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-primary/25 border-t-primary rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="w-8 h-8 border border-[var(--border-hairline)] border-t-[var(--accent-earth)] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen pt-24 pb-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pt-28 pb-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Back Link */}
         <div className="mb-6">
-          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-bold transition-all">
-            <ArrowLeft size={14} />
-            Back to Profile
+          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-earth)] hover:underline uppercase tracking-wider font-semibold">
+            <ArrowLeft size={13} /> Back to Profile
           </Link>
         </div>
 
-        {/* Step Indicator Headers */}
-        <div className="glass p-6 rounded-3xl border border-white/10 shadow-2xl mb-8">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+        {/* Header & Step Tracker */}
+        <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8 md:p-10 mb-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--border-hairline)] pb-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-white">Add New Listing</h1>
-              <p className="text-xs text-gray-400">Host your property or annex in Colombo and Galle</p>
+              <span className="label-floating block mb-1">Host Operations</span>
+              <h1 className="font-serif text-3xl md:text-4xl text-[var(--foreground)]">
+                List a <span className="italic">Residence</span>
+              </h1>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Publish a property listing to accept verified tenant inquiries.
+              </p>
             </div>
-            <span className="text-xs bg-primary-glow text-primary font-bold px-3 py-1.5 rounded-full">
-              Step {step} of 4
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--accent-earth)]">
+              Stage {step} of 4
             </span>
           </div>
-          
-          <div className="grid grid-cols-4 gap-2">
+
+          {/* Hairline Step Progress */}
+          <div className="grid grid-cols-4 gap-3">
             {[
-              { label: "Basic Details" },
-              { label: "Specifications" },
-              { label: "Media & Rent" },
-              { label: "Preview" }
-            ].map((s, idx) => (
-              <div 
-                key={idx}
-                className={`h-1.5 rounded-full transition-all ${
-                  idx + 1 <= step ? "bg-primary" : "bg-white/10"
-                }`}
-              />
+              "1. Overview",
+              "2. Specs",
+              "3. Media & Rate",
+              "4. Verification"
+            ].map((label, idx) => (
+              <div key={idx} className="space-y-2">
+                <div 
+                  className={`h-[2px] transition-all ${
+                    idx + 1 <= step ? "bg-[var(--accent-earth)]" : "bg-[var(--border-hairline)]"
+                  }`}
+                />
+                <span className={`text-[9px] uppercase tracking-wider font-semibold block truncate ${
+                  idx + 1 === step ? "text-[var(--foreground)]" : "text-[var(--text-muted)]"
+                }`}>
+                  {label}
+                </span>
+              </div>
             ))}
           </div>
         </div>
 
         {message && (
           <div
-            className={`p-4 rounded-2xl mb-6 text-xs font-semibold ${
+            className={`p-4 border text-xs font-medium mb-6 ${
               message.type === "success"
-                ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
-                : "bg-red-500/10 border border-red-500/25 text-red-400"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600"
+                : "bg-red-500/10 border-red-500/30 text-red-500"
             }`}
           >
             {message.text}
           </div>
         )}
 
-        {/* Step Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Form Wizard Column */}
-          <div className={`${step === 4 ? "lg:col-span-12" : "lg:col-span-12"} w-full`}>
-            <div className="glass p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                
-                {/* STEP 1: Basic Info */}
-                {step === 1 && (
-                  <div className="space-y-4 animate-fade-in">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-                      <Sparkles size={18} className="text-primary" />
-                      Basic Information
-                    </h3>
-
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-xs font-semibold text-gray-400">Property Title *</label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Luxury Annex near University of Moratuwa"
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Property Type *</label>
-                        <select
-                          name="type"
-                          value={formData.type}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-xs transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="annex" className="bg-gray-900 text-white">Annex</option>
-                          <option value="house" className="bg-gray-900 text-white">House</option>
-                          <option value="land" className="bg-gray-900 text-white">Land</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">General Area District *</label>
-                        <select
-                          name="area"
-                          value={formData.area}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 text-xs transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="colombo" className="bg-gray-900 text-white">Colombo</option>
-                          <option value="homagama" className="bg-gray-900 text-white">Homagama</option>
-                          <option value="biyagama" className="bg-gray-900 text-white">Biyagama</option>
-                          <option value="katunayaka" className="bg-gray-900 text-white">Katunayaka</option>
-                          <option value="galle" className="bg-gray-900 text-white">Galle</option>
-                          <option value="jaffna" className="bg-gray-900 text-white">Jaffna</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-xs font-semibold text-gray-400">Specific Location Address *</label>
-                      <input
-                        type="text"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Havelock Town, Colombo 5"
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-xs font-semibold text-gray-400">Detailed Description *</label>
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows={5}
-                        placeholder="Provide details about the spaces, rules, distance to public buses, and local areas..."
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all resize-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 2: Specifications */}
-                {step === 2 && (
-                  <div className="space-y-5 animate-fade-in">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-                      <Maximize size={18} className="text-primary" />
-                      Property Specifications
-                    </h3>
-
-                    {formData.type !== "land" ? (
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-1.5 text-left">
-                          <label className="text-xs font-semibold text-gray-400">Bedrooms *</label>
-                          <input
-                            type="number"
-                            name="bedrooms"
-                            min="0"
-                            value={formData.bedrooms}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 transition-all"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5 text-left">
-                          <label className="text-xs font-semibold text-gray-400">Bathrooms *</label>
-                          <input
-                            type="number"
-                            name="bathrooms"
-                            min="0"
-                            value={formData.bathrooms}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-primary/50 transition-all"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5 text-left">
-                          <label className="text-xs font-semibold text-gray-400">Size (Sq.Ft) *</label>
-                          <input
-                            type="text"
-                            name="size"
-                            value={formData.size}
-                            onChange={handleInputChange}
-                            placeholder="800"
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Plot Land Size (Sq.Ft / Perches) *</label>
-                        <input
-                          type="text"
-                          name="size"
-                          value={formData.size}
-                          onChange={handleInputChange}
-                          placeholder="e.g. 15 Perches"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                        />
-                      </div>
-                    )}
-
-                    {formData.type !== "land" && (
-                      <div className="space-y-3.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Select Amenities</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {amenitiesOptions.map((opt) => (
-                            <label 
-                              key={opt}
-                              className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer select-none text-xs transition-all ${
-                                formData.amenities.includes(opt)
-                                  ? "bg-primary-glow border-primary text-white"
-                                  : "bg-white/5 border-white/5 text-gray-400 hover:border-white/15"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={formData.amenities.includes(opt)}
-                                onChange={() => handleAmenityToggle(opt)}
-                                className="hidden"
-                              />
-                              <CheckCircle 
-                                size={14} 
-                                className={formData.amenities.includes(opt) ? "text-primary" : "text-gray-600"} 
-                              />
-                              <span>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* STEP 3: Media & Pricing */}
-                {step === 3 && (
-                  <div className="space-y-5 animate-fade-in">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-                      <ImageIcon size={18} className="text-primary" />
-                      Pricing & Media Upload
-                    </h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Monthly Rent (Rs) *</label>
-                        <input
-                          type="number"
-                          name="price"
-                          value={formData.price}
-                          onChange={handleInputChange}
-                          min="0"
-                          placeholder="25000"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Advance Deposit (Rs) *</label>
-                        <input
-                          type="number"
-                          name="advancePayment"
-                          value={formData.advancePayment}
-                          onChange={handleInputChange}
-                          min="0"
-                          placeholder="75000"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">Contact Phone *</label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          placeholder="0712345678"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-xs font-semibold text-gray-400">WhatsApp Contact</label>
-                        <input
-                          type="tel"
-                          name="whatsapp"
-                          value={formData.whatsapp}
-                          onChange={handleInputChange}
-                          placeholder="0712345678"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/50 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Image Drag & Drop */}
-                    <div className="space-y-2 text-left">
-                      <label className="text-xs font-semibold text-gray-400">Upload Property Images (Min 1, Max 5) *</label>
-                      <div 
-                        onDragEnter={handleDrag}
-                        onDragOver={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDrop={handleDrop}
-                        className={`relative w-full border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
-                          dragActive 
-                            ? "border-primary bg-primary-glow" 
-                            : "border-white/10 bg-white/5 hover:border-primary/40"
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          id="file-upload"
-                          className="hidden"
-                        />
-                        <label htmlFor="file-upload" className="cursor-pointer">
-                          <ImageIcon size={28} className="mx-auto text-primary mb-2.5" />
-                          <p className="text-xs text-white font-semibold">Click to select files or drag and drop</p>
-                          <p className="text-[10px] text-gray-500 mt-1">PNG, JPG, JPEG up to 2MB per image</p>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Thumbnails preview */}
-                    {uploadedImages.length > 0 && (
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] text-gray-500 font-semibold uppercase">Preview Images ({uploadedImages.length})</p>
-                        <div className="grid grid-cols-5 gap-3">
-                          {uploadedImages.map((img, idx) => (
-                            <div key={idx} className="relative aspect-video rounded-xl overflow-hidden bg-white/5 border border-white/10 group">
-                              <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(idx)}
-                                className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* STEP 4: Live Preview & Submit */}
-                {step === 4 && (
-                  <div className="space-y-6 animate-fade-in">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-                      <Eye size={18} className="text-primary" />
-                      Live Catalog Preview
-                    </h3>
-
-                    {/* Property Card Mock */}
-                    <div className="max-w-sm mx-auto bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl p-0 text-left">
-                      <div className="relative h-44 w-full bg-white/5">
-                        <img 
-                          src={uploadedImages[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover" 
-                        />
-                        <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
-                          <CheckCircle size={10} />
-                          Verified Seller (Mock)
-                        </div>
-                        <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur px-3 py-1 rounded-full text-[10px] font-semibold text-white uppercase">
-                          {formData.type}
-                        </div>
-                      </div>
-
-                      <div className="p-5 space-y-4">
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-white text-base line-clamp-1">{formData.title || "Listing Title Placeholder"}</h4>
-                          <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                            <MapPin size={10} className="text-primary" />
-                            {formData.location || "Address, Sri Lanka"}
-                          </p>
-                        </div>
-
-                        {formData.type !== "land" && (
-                          <div className="flex gap-4 text-[10px] text-gray-500 border-y border-white/5 py-2">
-                            <span className="flex items-center gap-1">
-                              <Bed size={12} className="text-primary" />
-                              {formData.bedrooms} Bed{formData.bedrooms > 1 ? 's' : ''}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Bath size={12} className="text-primary" />
-                              {formData.bathrooms} Bath{formData.bathrooms > 1 ? 's' : ''}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Maximize size={12} className="text-primary" />
-                              {formData.size || "0"} Sq.Ft
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-lg font-bold text-primary">Rs. {formData.price.toLocaleString()}</span>
-                            <span className="text-[9px] text-gray-500">/month</span>
-                          </div>
-                          <span className="bg-primary/20 text-primary text-[10px] font-bold px-3.5 py-1.5 rounded-xl border border-primary/20">
-                            View Details
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl max-w-md mx-auto flex gap-2 text-emerald-400">
-                      <ShieldCheck size={18} className="flex-shrink-0 mt-0.5" />
-                      <p className="text-[10px] leading-relaxed text-left">
-                        <strong>Ready to Publish:</strong> Review the card display preview above. Once you click "Publish Listing", the property will be synced and displayed immediately across the marketplace catalog.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Form Navigation Controls */}
-                <div className="flex gap-4 pt-4 border-t border-white/5">
-                  {step > 1 && (
-                    <button
-                      type="button"
-                      onClick={handlePrev}
-                      className="flex-1 bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1"
-                    >
-                      <ChevronLeft size={14} />
-                      Back
-                    </button>
-                  )}
-                  
-                  {step < 4 ? (
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="flex-1 bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1"
-                    >
-                      Continue
-                      <ChevronRight size={14} />
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={isSaving || accountType !== "seller"}
-                      className="flex-1 bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSaving ? "Publishing..." : "Publish Listing"}
-                    </button>
-                  )}
+        {/* Wizard Form Body */}
+        <div className="border border-[var(--border-hairline)] bg-[var(--surface)] p-8 md:p-12">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            
+            {/* STEP 1: Basic Information */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <div className="border-b border-[var(--border-hairline)] pb-4">
+                  <span className="label-floating block mb-1">Section 01</span>
+                  <h3 className="font-serif text-2xl text-[var(--foreground)]">Basic Information</h3>
                 </div>
 
-              </form>
-            </div>
-          </div>
+                <div className="space-y-1">
+                  <label className="label-floating">Property Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Minimalist Studio Annex, Colombo 07"
+                    required
+                    className="input-underline"
+                  />
+                </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="label-floating">Property Category *</label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      className="input-underline cursor-pointer"
+                    >
+                      <option value="annex">Private Annex</option>
+                      <option value="room">Single / Shared Room</option>
+                      <option value="house">Standalone House</option>
+                      <option value="land">Plot / Land Extent</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="label-floating">District Location *</label>
+                    <select
+                      name="area"
+                      value={formData.area}
+                      onChange={handleInputChange}
+                      className="input-underline cursor-pointer"
+                    >
+                      <option value="colombo">Colombo District</option>
+                      <option value="homagama">Homagama</option>
+                      <option value="biyagama">Biyagama</option>
+                      <option value="katunayaka">Katunayaka</option>
+                      <option value="galle">Galle District</option>
+                      <option value="jaffna">Jaffna District</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="label-floating">Specific Address / Road *</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Barnes Place, Colombo 07"
+                    required
+                    className="input-underline"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="label-floating">Architectural & Neighborhood Description *</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={5}
+                    placeholder="Describe natural lighting, room dimensions, nearby transit links, and residential policies..."
+                    required
+                    className="input-underline resize-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Specifications */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <div className="border-b border-[var(--border-hairline)] pb-4">
+                  <span className="label-floating block mb-1">Section 02</span>
+                  <h3 className="font-serif text-2xl text-[var(--foreground)]">Space Specifications</h3>
+                </div>
+
+                {formData.type !== "land" ? (
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="space-y-1">
+                      <label className="label-floating">Bedrooms *</label>
+                      <input
+                        type="number"
+                        name="bedrooms"
+                        min="0"
+                        value={formData.bedrooms}
+                        onChange={handleInputChange}
+                        className="input-underline"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="label-floating">Bathrooms *</label>
+                      <input
+                        type="number"
+                        name="bathrooms"
+                        min="0"
+                        value={formData.bathrooms}
+                        onChange={handleInputChange}
+                        className="input-underline"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="label-floating">Floor Area (Sq.Ft) *</label>
+                      <input
+                        type="text"
+                        name="size"
+                        value={formData.size}
+                        onChange={handleInputChange}
+                        placeholder="850"
+                        className="input-underline"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <label className="label-floating">Plot Land Extent (Perches / Sq.Ft) *</label>
+                    <input
+                      type="text"
+                      name="size"
+                      value={formData.size}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 15.5 Perches"
+                      className="input-underline"
+                    />
+                  </div>
+                )}
+
+                {formData.type !== "land" && (
+                  <div className="space-y-4 pt-4 border-t border-[var(--border-hairline)]">
+                    <label className="label-floating block">Available Amenities & Fixtures</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {amenitiesOptions.map((opt) => (
+                        <label 
+                          key={opt}
+                          className={`flex items-center gap-2.5 p-3 border cursor-pointer select-none text-xs transition-all ${
+                            formData.amenities.includes(opt)
+                              ? "border-[var(--accent-earth)] bg-[var(--surface-sunken)] text-[var(--foreground)] font-medium"
+                              : "border-[var(--border-hairline)] text-[var(--text-muted)] hover:border-[var(--foreground)]"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.amenities.includes(opt)}
+                            onChange={() => handleAmenityToggle(opt)}
+                            className="hidden"
+                          />
+                          <CheckCircle 
+                            size={14} 
+                            className={formData.amenities.includes(opt) ? "text-[var(--accent-earth)]" : "opacity-30"} 
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: Media & Rates */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <div className="border-b border-[var(--border-hairline)] pb-4">
+                  <span className="label-floating block mb-1">Section 03</span>
+                  <h3 className="font-serif text-2xl text-[var(--foreground)]">Financials & Media Upload</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="label-floating">Monthly Rent (LKR) *</label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      min="0"
+                      placeholder="35000"
+                      className="input-underline"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="label-floating">Security Deposit / Advance (LKR) *</label>
+                    <input
+                      type="number"
+                      name="advancePayment"
+                      value={formData.advancePayment}
+                      onChange={handleInputChange}
+                      min="0"
+                      placeholder="105000"
+                      className="input-underline"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="label-floating">Primary Contact Phone *</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="071 234 5678"
+                      className="input-underline"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="label-floating">WhatsApp Inquiries Contact</label>
+                    <input
+                      type="tel"
+                      name="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={handleInputChange}
+                      placeholder="071 234 5678"
+                      className="input-underline"
+                    />
+                  </div>
+                </div>
+
+                {/* Hairline Photo Dropzone */}
+                <div className="space-y-3 pt-4 border-t border-[var(--border-hairline)]">
+                  <label className="label-floating block">Photography (1 to 5 high-resolution captures) *</label>
+                  <div 
+                    onDragEnter={handleDrag}
+                    onDragOver={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDrop={handleDrop}
+                    className={`border border-dashed p-8 text-center cursor-pointer transition-colors ${
+                      dragActive 
+                        ? "border-[var(--accent-earth)] bg-[var(--surface-sunken)]" 
+                        : "border-[var(--border-hairline)] hover:border-[var(--foreground)]"
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      id="file-upload"
+                      className="hidden"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer space-y-2 block">
+                      <ImageIcon size={28} className="mx-auto text-[var(--accent-earth)]" />
+                      <p className="text-xs font-semibold text-[var(--foreground)]">Select files or drag and drop</p>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">PNG, JPG or WEBP formats</p>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Thumbnails */}
+                {uploadedImages.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="label-floating block">Uploaded Stills ({uploadedImages.length}/5)</span>
+                    <div className="grid grid-cols-5 gap-3">
+                      {uploadedImages.map((img, idx) => (
+                        <div key={idx} className="relative aspect-video border border-[var(--border-hairline)] group overflow-hidden">
+                          <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute inset-0 bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 4: Editorial Catalog Preview */}
+            {step === 4 && (
+              <div className="space-y-8">
+                <div className="border-b border-[var(--border-hairline)] pb-4">
+                  <span className="label-floating block mb-1">Section 04</span>
+                  <h3 className="font-serif text-2xl text-[var(--foreground)]">Catalog Preview & Confirmation</h3>
+                </div>
+
+                {/* Boutique Listing Preview Card */}
+                <div className="max-w-md mx-auto border border-[var(--border-hairline)] bg-[var(--surface)] overflow-hidden">
+                  <div className="relative h-56 w-full bg-[var(--surface-sunken)]">
+                    <img 
+                      src={uploadedImages[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute top-3 left-3 bg-[var(--background)]/90 backdrop-blur-sm px-2.5 py-1 text-[9px] uppercase tracking-[0.18em] font-semibold border border-[var(--border-hairline)]">
+                      {formData.type}
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4 text-left">
+                    <div className="space-y-1">
+                      <h4 className="font-serif text-xl text-[var(--foreground)] line-clamp-1">
+                        {formData.title || "Residence Title Placeholder"}
+                      </h4>
+                      <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5">
+                        <MapPin size={12} className="text-[var(--accent-earth)]" />
+                        {formData.location || "Address, Sri Lanka"}
+                      </p>
+                    </div>
+
+                    {formData.type !== "land" && (
+                      <div className="grid grid-cols-3 border-y border-[var(--border-hairline)] py-3 text-center text-xs">
+                        <div>
+                          <span className="label-floating block">Bedrooms</span>
+                          <span className="font-serif text-sm font-semibold">{formData.bedrooms}</span>
+                        </div>
+                        <div>
+                          <span className="label-floating block">Bathrooms</span>
+                          <span className="font-serif text-sm font-semibold">{formData.bathrooms}</span>
+                        </div>
+                        <div>
+                          <span className="label-floating block">Area</span>
+                          <span className="font-serif text-sm font-semibold">{formData.size || "0"} Sq.Ft</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-baseline justify-between pt-2">
+                      <div>
+                        <span className="font-serif text-2xl text-[var(--foreground)]">
+                          LKR {formData.price.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider ml-1">/mo</span>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--accent-earth)]">
+                        Active Listing
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-[var(--surface-sunken)] border border-[var(--border-hairline)] max-w-md mx-auto flex gap-3 text-xs text-[var(--text-muted)]">
+                  <ShieldCheck size={16} className="text-[var(--accent-earth)] flex-shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong>Ready for Publication:</strong> Submitting will index this property across the public search catalog and trigger direct tenant inquiries.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex gap-4 pt-6 border-t border-[var(--border-hairline)]">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="btn-editorial btn-editorial-outline flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronLeft size={14} /> Back
+                </button>
+              )}
+              
+              {step < 4 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="btn-editorial btn-editorial-primary flex-1 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  Continue <ChevronRight size={14} />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSaving || accountType !== "seller"}
+                  className="btn-editorial btn-editorial-primary flex-1 cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? "Publishing Property..." : "Publish Listing"}
+                </button>
+              )}
+            </div>
+
+          </form>
         </div>
 
       </div>
